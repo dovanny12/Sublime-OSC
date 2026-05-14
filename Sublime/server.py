@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect
 import sqlite3
 import os
 
@@ -125,12 +125,12 @@ init_db()
 
 @app.route('/')
 def root():
-    return app.send_static_file('login/index.html')
+    return redirect('/login/index.html')
 
 
 @app.route('/admin')
 def admin_index():
-    return app.send_static_file('admin-panel/index.html')
+    return redirect('/admin-panel/index.html')
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -266,6 +266,40 @@ def sales_data():
     ).fetchall()
     conn.close()
     return jsonify({'products': [dict(row) for row in products], 'clients': [dict(row) for row in clients]})
+
+@app.route('/api/recover', methods=['POST'])
+def recover_password():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    if not email or not password:
+        return jsonify({'message': 'Email y nueva contraseña son requeridos.'}), 400
+
+    conn = get_db()
+    user = conn.execute(
+        'SELECT id_usuario FROM usuarios WHERE correo = ?' if not USE_MYSQL else 'SELECT id_usuario FROM usuarios WHERE correo = %s',
+        (email,)
+    ).fetchone()
+
+    if not user:
+        conn.close()
+        return jsonify({'message': 'No se encontró un usuario con ese correo.'}), 404
+
+    if USE_MYSQL:
+        conn.execute(
+            'UPDATE usuarios SET contraseña = %s WHERE correo = %s',
+            (password, email)
+        )
+    else:
+        conn.execute(
+            'UPDATE usuarios SET contraseña = ? WHERE correo = ?',
+            (password, email)
+        )
+
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Contraseña actualizada con éxito.'})
 
 if __name__ == '__main__':
     app.run(debug=True, port=3000)

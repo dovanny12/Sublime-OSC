@@ -1,132 +1,224 @@
 /* RESET */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial, sans-serif;
 }
 
-/* FONDO GENERAL */
-body {
-  height: 100vh;
-  background: linear-gradient(135deg, #2c7a7b, #285e61);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* BODY */
+body{
+  height:100vh;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  background:linear-gradient(135deg,#2c7a7b,#285e61);
 }
 
 /* CONTENEDOR */
-.container {
-  width: 350px;
+.container{
+  width:350px;
 }
 
-/* CAJA FORMULARIOS */
-.form-box {
-  position: relative;
-  width: 100%;
-  background: white;
-  padding: 30px;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+/* FORM BOX */
+.form-box{
+  position:relative;
+
+  background:white;
+
+  padding:30px;
+
+  border-radius:15px;
+
+  overflow:hidden;
+
+  box-shadow:0 10px 25px rgba(0,0,0,0.2);
 }
 
 /* FORMULARIOS */
-.form {
-  position: absolute;
-  width: 100%;
-  transition: 0.5s ease;
-  opacity: 0;
-  transform: translateX(100%);
+.form{
+  position:absolute;
+
+  width:100%;
+
+  opacity:0;
+
+  transform:translateX(100%);
+
+  transition:0.5s ease;
 }
 
-/* FORM ACTIVO */
-.form.active {
-  opacity: 1;
-  transform: translateX(0);
-  position: relative;
-}
+.form.active{
+  position:relative;
 
-/* TITULOS */
-h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #2c7a7b;
-}
+  opacity:1;
 
-/* INPUTS */
-input {
-  width: 100%;
-  padding: 12px;
-  margin: 5px 0;
-  border: 2px solid #ddd;
-  border-radius: 20px;
-  outline: none;
-  transition: 0.3s;
-}
-
-/* INPUT FOCUS */
-input:focus {
-  border-color: #2c7a7b;
-}
-
-/* BOTÓN */
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border: none;
-  border-radius: 20px;
-  background: #2c7a7b;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-button:hover {
-  background: #246b6b;
-}
-
-/* LINKS */
-p {
-  text-align: center;
-  font-size: 13px;
-  margin-top: 10px;
-  cursor: pointer;
-  color: #2c7a7b;
-}
-
-/* VALIDACIÓN */
-input.error {
-  border-color: red;
-}
-
-input.success {
-  border-color: green;
-}
-
-.error {
-  color: red;
-  font-size: 11px;
-  height: 12px;
-  display: block;
-  margin-bottom: 5px;
+  transform:translateX(0);
 }
 
 /* LOGO */
-.logo-container {
-  text-align: center;
-  margin-bottom: 10px;
-  margin-top: -25px;
+.logo-container{
+  text-align:center;
+  margin-bottom:15px;
 }
 
-.logo-container img {
-  width: 120px;
-  margin-bottom: -10px;
+.logo-container img{
+  width:70px;
+  margin-bottom:10px;
 }
 
-.logo-container h3 {
-  font-size: 30px;
-  color: #555;
+.logo-container h3{
+  color:#666;
+  font-size:14px;
+}
+
+/* TITULOS */
+h2{
+  text-align:center;
+  margin-bottom:20px;
+  color:#2c7a7b;
+}
+
+/* INPUTS */
+input{
+  width:100%;
+
+  padding:12px;
+
+  border:2px solid #ddd;
+
+  border-radius:20px;
+
+  outline:none;
+
+  transition:0.3s;
+}
+
+input:focus{
+  border-color:#2c7a7b;
+}
+
+/* PASSWORD BOX */
+.password-box{
+  position:relative;
+  margin-top:5px;
+}
+
+.password-box i{
+  position:absolute;
+
+  right:15px;
+  top:50%;
+
+  transform:translateY(-50%);
+
+  cursor:pointer;
+
+  color:#666;
+}
+
+/* BOTÓN */
+button{
+  width:100%;
+
+  padding:12px;
+
+  margin-top:15px;
+
+  border:none;
+
+  border-radius:20px;
+
+  background:#2c7a7b;
+
+  color:white;
+
+  font-weight:bold;
+
+  cursor:pointer;
+
+  transition:0.3s;
+}
+
+button:hover{
+  background:#246b6b;
+}
+
+/* LINKS */
+p{
+  text-align:center;
+
+  margin-top:12px;
+
+  color:#2c7a7b;
+
+  font-size:13px;
+
+  cursor:pointer;
+}
+
+/* VALIDACIONES */
+input.error{
+  border-color:red;
+}
+
+input.success{
+  border-color:green;
+}
+
+.error{
+  color:red;
+
+  font-size:11px;
+
+  display:block;
+
+  margin:5px 0 10px;
+}
+
+/* MODAL */
+.recover-modal{
+  position:fixed;
+
+  top:0;
+  left:0;
+
+  width:100%;
+  height:100%;
+
+  background:rgba(0,0,0,0.5);
+
+  display:none;
+
+  justify-content:center;
+  align-items:center;
+}
+
+.recover-box{
+  background:white;
+
+  width:320px;
+
+  padding:30px;
+
+  border-radius:15px;
+
+  text-align:center;
+
+  animation:popup 0.3s ease;
+}
+
+/* ANIMACIÓN */
+@keyframes popup{
+  from{
+    transform:scale(0.8);
+    opacity:0;
+  }
+
+  to{
+    transform:scale(1);
+    opacity:1;
+  }
 }
