@@ -1,0 +1,144 @@
+INSTRUCCIONES DE USO - SISTEMA SUBLIME
+========================================
+
+Este documento contiene las instrucciones para ejecutar y usar tanto la página web de Sublime como el sistema administrativo.
+
+REQUISITOS DEL SISTEMA
+======================
+- Python 3.8 o superior instalado
+- Navegador web moderno (Chrome, Firefox, Edge)
+- Conexión a internet (para algunos recursos externos)
+
+INSTALACIÓN Y CONFIGURACIÓN
+===========================
+1. Asegúrate de tener Python instalado:
+   - Abre una terminal y ejecuta: python --version
+   - Si no está instalado, descarga desde: https://www.python.org/
+
+2. Instala las dependencias (si es necesario):
+   - Navega a la carpeta del proyecto
+   - Ejecuta: pip install flask flask-sqlalchemy
+
+EJECUTAR LA PÁGINA WEB
+=======================
+1. Abre una terminal o línea de comandos
+2. Navega a la carpeta de la página web:
+   cd "c:\Users\PC\OneDrive\Documentos\Universidad\Proyecto SC\pagina-web-sublime\pagina web"
+
+3. Ejecuta el servidor:
+   python app.py
+
+4. Abre tu navegador y ve a:
+   http://127.0.0.1:5000
+
+5. Si no se abre automáticamente, verifica que el servidor esté corriendo (deberías ver "Running on http://127.0.0.1:5000/")
+
+SOLUCIÓN DE PROBLEMAS PARA LA PÁGINA WEB
+=========================================
+- Si no se muestra la página:
+  - Verifica que el puerto 5000 no esté ocupado por otra aplicación
+  - Asegúrate de que no hay errores en la consola (presiona Ctrl+C para detener y ver mensajes)
+  - Verifica que la base de datos existe en: Sublime/BD/database.db
+
+- Si hay errores de importación:
+  - Instala las dependencias faltantes: pip install flask flask-sqlalchemy
+
+- Si hay errores de base de datos:
+  - Verifica que el archivo database.sql existe en Sublime/BD/
+  - La base de datos se crea automáticamente al primer inicio
+
+EJECUTAR EL SISTEMA ADMINISTRATIVO
+===================================
+1. Abre otra terminal o línea de comandos (mientras la página web sigue corriendo)
+2. Navega a la carpeta del sistema administrativo:
+   cd "c:\Users\PC\OneDrive\Documentos\Universidad\Proyecto SC\Sublime"
+
+3. Ejecuta el servidor administrativo:
+   python server.py
+
+4. Abre tu navegador y ve a:
+   http://127.0.0.1:3000
+
+5. Credenciales de administrador por defecto:
+   - Usuario: admin@sublime.com
+   - Contraseña: admin123
+
+USO BÁSICO DE LA PÁGINA WEB
+===========================
+1. Navegación:
+   - Inicio: Página principal con productos destacados
+   - Catálogo: Ver todos los productos con filtros por categoría
+   - Personalizar: Crear productos personalizados
+   - Carrito: Ver y gestionar productos seleccionados
+
+2. Login/Registro:
+   - Haz clic en "Iniciar sesión" en el menú superior
+   - Regístrate o inicia sesión con tus credenciales
+   - Una vez logueado, puedes acceder a tu perfil y historial
+
+3. Comprar productos:
+   - Navega al catálogo
+   - Haz clic en "Añadir" en los productos deseados
+   - Ve al carrito y procede al pago
+
+USO BÁSICO DEL SISTEMA ADMINISTRATIVO
+=====================================
+1. Dashboard:
+   - Ver estadísticas generales de ventas, clientes y productos
+
+2. Inventario:
+   - Ver todos los productos
+   - Agregar nuevos productos con categorías específicas
+   - Gestionar stock
+
+3. Clientes:
+   - Ver lista de clientes registrados
+   - Gestionar información de clientes
+
+4. Facturas:
+   - Ver historial de pedidos
+   - Gestionar estados de pedidos
+
+5. Agregar productos:
+   - Ve a la pestaña "Inventario"
+   - Haz clic en "Agregar Producto"
+   - Completa el formulario con nombre, categoría, precio, stock
+   - Los productos aparecerán automáticamente en la página web
+
+CATEGORÍAS DISPONIBLES
+======================
+Los productos se pueden agregar en estas categorías:
+- taza
+- camiseta
+- sudadera
+- shorts
+- gorras
+- termo
+- bolsa
+- funda
+- mousepad
+- boligrafos
+- llaveros
+- placas
+
+INTEGRACIÓN ENTRE SISTEMAS
+==========================
+- Los productos agregados en el sistema administrativo aparecen automáticamente en la página web
+- Los usuarios registrados en la web pueden iniciar sesión en ambos sistemas
+- El carrito y pedidos se sincronizan entre la web y el administrativo
+
+DETENER LOS SERVIDORES
+======================
+- Para detener la página web: Presiona Ctrl+C en su terminal
+- Para detener el administrativo: Presiona Ctrl+C en su terminal
+- Ambos servidores pueden correr simultáneamente
+
+SOPORTE
+=======
+Si encuentras problemas:
+1. Verifica que ambos servidores estén corriendo en puertos diferentes (5000 y 3000)
+2. Revisa los mensajes de error en las terminales
+3. Asegúrate de que la base de datos esté accesible
+4. Verifica que no haya conflictos de puertos
+
+Para más ayuda, revisa los archivos de configuración o contacta al desarrollador.
