@@ -1,4 +1,11 @@
 <!DOCTYPE html>
+document.addEventListener('DOMContentLoaded', () => {
+    const sesionActiva = localStorage.getItem('sesionActiva');
+
+    if (sesionActiva !== 'true') {
+        window.location.href = 'login.html';
+    }
+});
 <html lang="es">
 <head>
   <meta charset="UTF-8">
