@@ -50,7 +50,12 @@ function apiRequest(endpoint, options = {}) {
 }
 
 function formatCurrency(value) {
-    return `$${Number(value || 0).toFixed(2)}`;
+    
+    const usd = Number(value || 0);
+
+    const bs = usd * usdRate;
+
+    return `Bs ${bs.toFixed(2)} (${usd.toFixed(2)}$)`;
 }
 
 /* =========================
@@ -1082,3 +1087,344 @@ document.querySelectorAll('.settings-tab-button').forEach(btn => {
         document.getElementById(target).classList.add('active');
     });
 });
+
+/* =========================
+   MODAL AGREGAR PRODUCTO
+========================= */
+
+const productModal =
+    document.getElementById('productModal');
+
+const openProductModal =
+    document.getElementById('openProductModal');
+
+const closeProductModal =
+    document.getElementById('closeProductModal');
+
+const cancelProduct =
+    document.getElementById('cancelProduct');
+
+const productForm =
+    document.getElementById('productForm');
+
+/* ABRIR MODAL */
+
+if (openProductModal) {
+
+    openProductModal.addEventListener('click', () => {
+
+        productModal.classList.add('active');
+
+    });
+
+}
+
+/* CERRAR MODAL */
+
+function cerrarProductModal() {
+
+    productModal.classList.remove('active');
+
+}
+
+if (closeProductModal) {
+
+    closeProductModal.addEventListener(
+        'click',
+        cerrarProductModal
+    );
+
+}
+
+if (cancelProduct) {
+
+    cancelProduct.addEventListener(
+        'click',
+        cerrarProductModal
+    );
+
+}
+
+/* CLICK AFUERA */
+
+window.addEventListener('click', e => {
+
+    if (e.target === productModal) {
+
+        cerrarProductModal();
+
+    }
+
+});
+
+/* =========================
+   GUARDAR PRODUCTO
+========================= */
+
+if (productForm) {
+
+    productForm.addEventListener('submit', e => {
+
+        e.preventDefault();
+
+        const nombre =
+            document.getElementById('productName').value;
+
+        const categoria =
+            document.getElementById('productCategory').value;
+
+        const precio =
+            document.getElementById('productPrice').value;
+
+        const stock =
+            document.getElementById('productStock').value;
+
+        const descripcion =
+            document.getElementById('productDescription').value;
+
+        const imagenInput =
+            document.getElementById('productImage');
+
+        const imagen =
+            imagenInput.files[0];
+
+        const tableBody =
+            document.getElementById('inventoryTableBody');
+
+        if (!tableBody) return;
+
+        let imageHTML = 'Sin imagen';
+
+        if (imagen) {
+
+            const imageURL =
+                URL.createObjectURL(imagen);
+
+            imageHTML = `
+                <img src="${imageURL}"
+                     alt="${nombre}"
+                     class="inventory-image">
+            `;
+
+        }
+
+        const newRow = document.createElement('tr');
+
+        newRow.innerHTML = `
+
+            <td>
+
+                <div class="inventory-product">
+
+                    ${imageHTML}
+
+                    <div>
+
+                        <strong>${nombre}</strong>
+
+                        <p class="inventory-description">
+                            ${descripcion || 'Sin descripción'}
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </td>
+
+            <td>${categoria}</td>
+
+            <td>${formatCurrency(precio)}</td>
+
+            <td>${stock}</td>
+
+            <td>
+
+                <button class="table-btn edit-btn">
+                    Editar
+                </button>
+
+                <button class="table-btn delete-btn">
+                    Eliminar
+                </button>
+
+            </td>
+
+        `;
+
+        tableBody.prepend(newRow);
+
+        /* LIMPIAR FORMULARIO */
+
+        productForm.reset();
+
+        /* CERRAR MODAL */
+
+        cerrarProductModal();
+
+    });
+
+}
+
+/* =========================
+   ELIMINAR PRODUCTO
+========================= */
+
+document.addEventListener('click', e => {
+
+    if (
+        e.target.classList.contains('delete-btn')
+    ) {
+
+        const row = e.target.closest('tr');
+
+        if (row) {
+
+            row.remove();
+
+        }
+
+    }
+
+});
+
+/* =========================
+   MODAL CLIENTES
+========================= */
+
+const clientModal =
+    document.getElementById('clientModal');
+
+const openClientModal =
+    document.getElementById('openClientModal');
+
+const closeClientModal =
+    document.getElementById('closeClientModal');
+
+const cancelClient =
+    document.getElementById('cancelClient');
+
+const clientForm =
+    document.getElementById('clientForm');
+
+/* ABRIR */
+
+if (openClientModal) {
+
+    openClientModal.addEventListener('click', () => {
+
+        clientModal.classList.add('active');
+
+    });
+
+}
+
+/* CERRAR */
+
+function cerrarClientModal() {
+
+    clientModal.classList.remove('active');
+
+}
+
+if (closeClientModal) {
+
+    closeClientModal.addEventListener('click', cerrarClientModal);
+
+}
+
+if (cancelClient) {
+
+    cancelClient.addEventListener('click', cerrarClientModal);
+
+}
+
+/* CLICK FUERA */
+
+window.addEventListener('click', e => {
+
+    if (e.target === clientModal) {
+
+        cerrarClientModal();
+
+    }
+
+});
+
+/* GUARDAR CLIENTE */
+
+if (clientForm) {
+
+    clientForm.addEventListener('submit', e => {
+
+        e.preventDefault();
+
+        const name = document.getElementById('clientName').value;
+        const email = document.getElementById('clientEmail').value;
+        const phone = document.getElementById('clientPhone').value;
+        const address = document.getElementById('clientAddress').value;
+
+        const container =
+            document.getElementById('clientsList');
+
+        const card = document.createElement('div');
+        card.classList.add('client-card');
+
+        const initial = name.charAt(0).toUpperCase();
+
+        card.innerHTML = `
+            <div class="client-avatar">${initial}</div>
+
+            <div>
+                <h3>${name}</h3>
+                <p>${email}</p>
+                <p>${phone}</p>
+                <p>${address}</p>
+            </div>
+        `;
+
+        container.prepend(card);
+
+        clientForm.reset();
+
+        cerrarClientModal();
+
+    });
+
+}
+
+/* =========================
+   TASA DÓLAR (BS)
+========================= */
+
+let usdRate = Number(localStorage.getItem('usdRate')) || 36.5;
+
+const usdInput = document.getElementById('usdRate');
+const saveUsdBtn = document.getElementById('saveUsdRate');
+
+/* cargar valor en input */
+if (usdInput) {
+    usdInput.value = usdRate;
+}
+
+/* guardar tasa */
+if (saveUsdBtn) {
+
+    saveUsdBtn.addEventListener('click', () => {
+
+        usdRate = Number(usdInput.value);
+
+        if (!usdRate || usdRate <= 0) {
+            alert('Ingresa una tasa válida');
+            return;
+        }
+
+        localStorage.setItem('usdRate', usdRate);
+
+        alert('Tasa actualizada correctamente');
+
+        location.reload(); // recarga para aplicar cambios
+
+    });
+
+}

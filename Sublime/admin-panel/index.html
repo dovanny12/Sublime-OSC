@@ -227,7 +227,7 @@
                     </p>
                 </div>
 
-                <button class="btn secondary">
+                <button class="btn secondary" id="openProductModal">
                     + Agregar Producto
                 </button>
 
@@ -331,7 +331,7 @@
                     </p>
                 </div>
 
-                <button class="btn secondary">
+                <button class="btn secondary" id="openClientModal">
                     + Agregar Cliente
                 </button>
 
@@ -409,7 +409,6 @@
         </section>
 
         <!-- CONFIGURACIÓN -->
-        <!-- CONFIGURACIÓN -->
         <section class="page-section" id="settings">
 
             <div class="page-header">
@@ -477,6 +476,25 @@
                             <span class="slider"></span>
 
                         </label>
+
+                    </div>
+
+                    <!-- TASA DEL DÓLAR -->
+                    <div class="box settings-card">
+
+                        <h3>Tasa del dólar</h3>
+
+                        <p>Configura el valor del dólar en bolívares (Bs)</p>
+
+                        <label>Tasa actual (Bs por $1)</label>
+
+                        <input type="number"
+                            id="usdRate"
+                            placeholder="Ej: 36.50"/>
+
+                        <button class="btn secondary" id="saveUsdRate">
+                            Guardar Tasa
+                        </button>
 
                     </div>
 
@@ -803,6 +821,207 @@
             </button>
 
         </div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     MODAL AGREGAR PRODUCTO
+========================= -->
+
+<div class="product-modal" id="productModal">
+
+    <div class="product-modal-content">
+
+        <!-- HEADER -->
+        <div class="product-header">
+
+            <h2>Agregar Producto</h2>
+
+            <span class="close-product-modal" id="closeProductModal">
+                &times;
+            </span>
+
+        </div>
+
+        <!-- FORMULARIO -->
+        <form id="productForm">
+
+            <div class="product-group">
+
+                <label>Nombre del Producto</label>
+
+                <input type="text"
+                       id="productName"
+                       placeholder="Ej: Franela Negra"
+                       required>
+
+            </div>
+
+            <div class="product-group">
+
+                <label>Categoría</label>
+
+                <input type="text"
+                       id="productCategory"
+                       placeholder="Ej: Franelas"
+                       required>
+
+            </div>
+
+            <div class="product-row">
+
+                <div class="product-group">
+
+                    <label>Precio</label>
+
+                    <input type="number"
+                           id="productPrice"
+                           placeholder="$0.00"
+                           required>
+
+                </div>
+
+                <div class="product-group">
+
+                    <label>Stock</label>
+
+                    <input type="number"
+                           id="productStock"
+                           placeholder="0"
+                           required>
+
+                </div>
+
+            </div>
+
+            <div class="product-group">
+
+                <label>Descripción</label>
+
+                <textarea id="productDescription"
+                          placeholder="Descripción del producto"></textarea>
+
+            </div>
+
+            <div class="product-group">
+
+                <label>Imagen del Producto</label>
+
+                <input type="file"
+                       id="productImage"
+                       accept="image/*">
+
+            </div>
+
+            <!-- BOTONES -->
+            <div class="product-actions">
+
+                <button type="button"
+                        class="btn-cancel-product"
+                        id="cancelProduct">
+
+                    Cancelar
+
+                </button>
+
+                <button type="submit"
+                        class="btn-save-product">
+
+                    Guardar Producto
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     MODAL AGREGAR CLIENTE
+========================= -->
+
+<div class="client-modal" id="clientModal">
+
+    <div class="client-modal-content">
+
+        <!-- HEADER -->
+        <div class="client-header">
+
+            <h2>Agregar Cliente</h2>
+
+            <span class="close-client-modal" id="closeClientModal">
+                &times;
+            </span>
+
+        </div>
+
+        <!-- FORM -->
+        <form id="clientForm">
+
+            <div class="client-group">
+
+                <label>Nombre</label>
+
+                <input type="text"
+                       id="clientName"
+                       required>
+
+            </div>
+
+            <div class="client-group">
+
+                <label>Email</label>
+
+                <input type="email"
+                       id="clientEmail"
+                       required>
+
+            </div>
+
+            <div class="client-group">
+
+                <label>Teléfono</label>
+
+                <input type="text"
+                       id="clientPhone">
+
+            </div>
+
+            <div class="client-group">
+
+                <label>Dirección</label>
+
+                <input type="text"
+                       id="clientAddress">
+
+            </div>
+
+            <!-- BOTONES -->
+            <div class="client-actions">
+
+                <button type="button"
+                        class="btn-cancel-client"
+                        id="cancelClient">
+
+                    Cancelar
+
+                </button>
+
+                <button type="submit"
+                        class="btn-save-client">
+
+                    Guardar Cliente
+
+                </button>
+
+            </div>
+
+        </form>
 
     </div>
 

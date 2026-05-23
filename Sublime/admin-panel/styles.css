@@ -127,6 +127,7 @@ body{
 
 .btn.secondary{
     background:#2c7a7b;
+    margin-top:10px;
 }
 
 /* =========================
@@ -288,25 +289,6 @@ body{
     object-fit: contain;
 }
 
-/* =========================
-   COLORES
-========================= */
-
-.card.blue{
-    border-left:4px solid #2563eb;
-}
-
-.card.green{
-    border-left:4px solid #16a34a;
-}
-
-.card.yellow{
-    border-left:4px solid #eab308;
-}
-
-.card.pink{
-    border-left:4px solid #ec4899;
-}
 
 /* =========================
    ROWS
@@ -956,4 +938,387 @@ body.dark .btn-cancel{
         font-size:22px;
     }
 
+}
+
+/* =========================
+   MODAL PRODUCTO
+========================= */
+
+.product-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.35);
+    backdrop-filter:blur(3px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    opacity:0;
+    visibility:hidden;
+    transition:0.25s ease;
+    z-index:1000;
+    padding:20px;
+}
+
+.product-modal.active{
+    opacity:1;
+    visibility:visible;
+}
+
+.product-modal-content{
+    width:100%;
+    max-width:520px;
+    background:white;
+    border-radius:22px;
+    padding:24px;
+    transform:translateY(20px);
+    transition:0.25s ease;
+    box-shadow:0 10px 40px rgba(0,0,0,0.15);
+    max-height:90vh;
+    overflow-y:auto;
+}
+
+.product-modal.active .product-modal-content{
+    transform:translateY(0);
+}
+
+/* HEADER */
+
+.product-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:24px;
+}
+
+.product-header h2{
+    font-size:26px;
+    color:#111827;
+}
+
+.close-product-modal{
+    font-size:28px;
+    cursor:pointer;
+    color:#6b7280;
+    transition:0.2s;
+}
+
+.close-product-modal:hover{
+    color:#111827;
+}
+
+/* FORM */
+
+.product-group{
+    display:flex;
+    flex-direction:column;
+    margin-bottom:18px;
+}
+
+.product-group label{
+    margin-bottom:10px;
+    font-weight:600;
+    color:#374151;
+}
+
+.product-group input,
+.product-group textarea{
+    width:100%;
+    padding:14px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#f8fafc;
+    font-size:14px;
+    outline:none;
+    transition:0.2s;
+}
+
+.product-group textarea{
+    min-height:110px;
+    resize:none;
+}
+
+.product-group input:focus,
+.product-group textarea:focus{
+    border-color:#2c7a7b;
+    background:white;
+}
+
+/* ROW */
+
+.product-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+}
+
+/* ACTIONS */
+
+.product-actions{
+    display:flex;
+    gap:14px;
+    margin-top:10px;
+}
+
+.product-actions button{
+    flex:1;
+    height:50px;
+    border:none;
+    border-radius:12px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.btn-cancel-product{
+    background:white;
+    border:1px solid #d1d5db !important;
+}
+
+.btn-save-product{
+    background:#2c7a7b;
+    color:white;
+}
+
+/* =========================
+   DARK MODE PRODUCT MODAL
+========================= */
+
+body.dark .product-modal-content{
+    background:#111827;
+}
+
+body.dark .product-header h2,
+body.dark .product-group label{
+    color:#f8fafc;
+}
+
+body.dark .product-group input,
+body.dark .product-group textarea{
+    background:#1f2937;
+    border-color:#334155;
+    color:#f8fafc;
+}
+
+body.dark .product-group input:focus,
+body.dark .product-group textarea:focus{
+    background:#111827;
+    border-color:#2c7a7b;
+}
+
+body.dark .btn-cancel-product{
+    background:#1f2937;
+    color:white;
+    border-color:#334155 !important;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:600px){
+
+    .product-row{
+        grid-template-columns:1fr;
+    }
+
+    .product-actions{
+        flex-direction:column;
+    }
+
+    .product-header h2{
+        font-size:22px;
+    }
+
+}
+
+/* =========================
+   INVENTORY PRODUCT
+========================= */
+
+.inventory-product{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.inventory-image{
+    width:60px;
+    height:60px;
+    object-fit:cover;
+    border-radius:12px;
+    border:1px solid #e5e7eb;
+}
+
+.inventory-description{
+    font-size:12px;
+    color:#6b7280;
+    margin-top:4px;
+    max-width:250px;
+}
+
+/* =========================
+   TABLE BUTTONS
+========================= */
+
+.table-btn{
+    border:none;
+    padding:8px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:600;
+    margin-right:8px;
+    transition:0.2s;
+}
+
+.edit-btn{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.delete-btn{
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.table-btn:hover{
+    opacity:0.9;
+}
+
+/* =========================
+   DARK MODE INVENTORY
+========================= */
+
+body.dark .inventory-image{
+    border-color:#334155;
+}
+
+body.dark .inventory-description{
+    color:#94a3b8;
+}
+
+body.dark .edit-btn{
+    background:#1e3a8a;
+    color:#bfdbfe;
+}
+
+body.dark .delete-btn{
+    background:#7f1d1d;
+    color:#fecaca;
+}
+
+/* =========================
+   MODAL CLIENTE
+========================= */
+
+.client-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.35);
+    backdrop-filter:blur(3px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    opacity:0;
+    visibility:hidden;
+    transition:0.25s ease;
+    z-index:1000;
+    padding:20px;
+}
+
+.client-modal.active{
+    opacity:1;
+    visibility:visible;
+}
+
+.client-modal-content{
+    width:100%;
+    max-width:500px;
+    background:white;
+    border-radius:22px;
+    padding:24px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.15);
+}
+
+.client-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.client-header h2{
+    font-size:24px;
+}
+
+.close-client-modal{
+    font-size:28px;
+    cursor:pointer;
+    color:#6b7280;
+}
+
+.close-client-modal:hover{
+    color:#111827;
+}
+
+.client-group{
+    display:flex;
+    flex-direction:column;
+    margin-bottom:15px;
+}
+
+.client-group label{
+    margin-bottom:8px;
+    font-weight:600;
+}
+
+.client-group input{
+    padding:12px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    background:#f8fafc;
+}
+
+.client-actions{
+    display:flex;
+    gap:12px;
+    margin-top:10px;
+}
+
+.btn-cancel-client{
+    flex:1;
+    background:white;
+    border:1px solid #d1d5db;
+    padding:12px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.btn-save-client{
+    flex:1;
+    background:#2c7a7b;
+    color:white;
+    border:none;
+    padding:12px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+/* DARK MODE */
+
+body.dark .client-modal-content{
+    background:#111827;
+    color:white;
+}
+
+body.dark .client-group input{
+    background:#1f2937;
+    color:white;
+    border-color:#334155;
+}
+
+#usdRate{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border-radius:10px;
+    border:1px solid #e2e8f0;
 }
