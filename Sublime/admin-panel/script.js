@@ -352,8 +352,17 @@ async function loadInventory() {
 
                 <td>${item.stock}</td>
 
-                <td>Editar / Eliminar</td>
+                <td>
+                    <button class="btn-edit"
+                        onclick="openEditModal(${item.id_producto})">
+                        Editar
+                    </button>
 
+                    <button class="btn-delete"
+                        onclick="deleteProduct(${item.id_producto})">
+                        Eliminar
+                    </button>
+                </td>
             </tr>
 
         `).join('');
@@ -1426,5 +1435,115 @@ if (saveUsdBtn) {
         location.reload(); // recarga para aplicar cambios
 
     });
+
+}
+
+async function openEditProduct(id){
+
+    try{
+
+        const response = await apiRequest(`product/${id}`);
+
+        const product = response.product;
+
+        document.getElementById('editId').value = product.id_producto;
+        document.getElementById('editNombre').value = product.nombre;
+        document.getElementById('editCategoria').value = product.categoria;
+        document.getElementById('editPrecio').value = product.precio;
+        document.getElementById('editStock').value = product.stock;
+        document.getElementById('editImagen').value = product.imagen || '';
+        document.getElementById('editDescripcion').value = product.descripcion || '';
+
+        document
+            .getElementById('editProductModal')
+            .classList.add('active');
+
+    }catch(error){
+
+        console.error(error);
+
+    }
+}
+
+document
+    .getElementById('saveEditBtn')
+    .addEventListener('click', async ()=>{
+
+    const id = document.getElementById('editId').value;
+
+    try{
+
+        await apiRequest(`product/${id}`,{
+            method:'PUT',
+            body:{
+                nombre:document.getElementById('editNombre').value,
+                categoria:document.getElementById('editCategoria').value,
+                precio:document.getElementById('editPrecio').value,
+                stock:document.getElementById('editStock').value,
+                imagen:document.getElementById('editImagen').value,
+                descripcion:document.getElementById('editDescripcion').value
+            }
+        });
+
+        document
+            .getElementById('editProductModal')
+            .classList.remove('active');
+
+        loadInventory();
+
+    }catch(error){
+
+        alert(error.message);
+
+    }
+
+});
+
+document
+    .getElementById('cancelEditBtn')
+    .addEventListener('click',()=>{
+
+    document
+        .getElementById('editProductModal')
+        .classList.remove('active');
+
+});
+
+document
+    .getElementById('cancelEditBtn')
+    .addEventListener('click',()=>{
+
+    document
+        .getElementById('editProductModal')
+        .classList.remove('active');
+
+});
+
+const editModal =
+    document.getElementById('editProductModal');
+
+editModal.addEventListener('click',(e)=>{
+
+    if(e.target === editModal){
+
+        editModal.classList.remove('active');
+
+    }
+
+});
+
+window.openEditProduct = async function(id){
+
+    console.log("Editar producto:", id);
+
+    const modal =
+        document.getElementById("editProductModal");
+
+    if(!modal){
+        console.error("No existe editProductModal");
+        return;
+    }
+
+    modal.classList.add("active");
 
 }
