@@ -394,34 +394,53 @@ async function loadClients() {
 
         container.innerHTML = response.clients.map(client => {
 
-            const initials = client.nombre
-                ? client.nombre.charAt(0).toUpperCase()
-                : 'C';
+            const inicial =
+                client.nombre.charAt(0).toUpperCase();
 
             return `
+                <div class="client-card-modern">
 
-                <div class="client-card">
+                    <div class="client-actions">
 
-                    <div class="client-avatar">
-                        ${initials}
+                        <button
+                            class="edit-client-btn"
+                            onclick="openEditClient(${client.id_cliente})">
+
+                            ✏️
+
+                        </button>
+
+                        <button
+                            class="delete-client-btn"
+                            onclick="deleteClient(${client.id_cliente})">
+
+                            🗑️
+
+                        </button>
+
                     </div>
 
-                    <div>
-
-                        <h3>${client.nombre}</h3>
-
-                        <p>${client.correo || ''}</p>
-
-                        <p>${client.telefono || ''}</p>
-
-                        <p>${client.direccion || ''}</p>
-
+                    <div class="client-avatar-modern">
+                        ${inicial}
                     </div>
 
+                    <h3>${client.nombre}</h3>
+
+                    <p>${client.email}</p>
+
+                    <p>${client.telefono}</p>
+
+                    <p>${client.direccion}</p>
+
+                    <hr>
+
+                    <small>
+                        Registrado:
+                        ${new Date().toLocaleDateString('es-VE')}
+                    </small>
                 </div>
 
-            `;
-
+                `;
         }).join('');
 
     } catch (error) {
@@ -477,7 +496,11 @@ async function loadInvoices() {
                 </td>
 
                 <td>
-                    Ver Detalle
+                    <button 
+                        class="btn-view-invoice"
+                        onclick="openInvoiceModal(${invoice.id})">
+                        Ver Detalle
+                    </button>
                 </td>
 
             </tr>
@@ -1377,19 +1400,52 @@ if (clientForm) {
             document.getElementById('clientsList');
 
         const card = document.createElement('div');
-        card.classList.add('client-card');
 
-        const initial = name.charAt(0).toUpperCase();
+        card.classList.add('client-card-modern');
 
         card.innerHTML = `
-            <div class="client-avatar">${initial}</div>
 
-            <div>
-                <h3>${name}</h3>
-                <p>${email}</p>
-                <p>${phone}</p>
-                <p>${address}</p>
-            </div>
+        <div class="client-actions">
+
+            <button
+                class="edit-client-btn"
+                onclick="openEditClient(0)">
+
+                ✏️
+
+            </button>
+
+            <button
+                class="delete-client-btn"
+                onclick="this.closest('.client-card-modern').remove()">
+
+                🗑️
+
+            </button>
+
+        </div>
+
+        <div class="client-avatar-modern">
+
+            ${initial}
+
+        </div>
+
+        <h3>${name}</h3>
+
+        <p>${email}</p>
+
+        <p>${phone}</p>
+
+        <p>${address}</p>
+
+        <hr>
+
+        <small>
+            Registrado:
+            ${new Date().toLocaleDateString('es-VE')}
+        </small>
+
         `;
 
         container.prepend(card);
@@ -1547,3 +1603,187 @@ window.openEditProduct = async function(id){
     modal.classList.add("active");
 
 }
+
+window.openInvoiceModal = async function(id){
+
+    try{
+
+        const invoice =
+            await apiRequest(`invoice/${id}`);
+
+        document.getElementById('invoiceNumber')
+            .textContent =
+            `INV-${String(invoice.id).padStart(3,'0')}`;
+
+        document.getElementById('invoiceClient')
+            .textContent =
+            invoice.cliente;
+
+        document.getElementById('invoiceDate')
+            .textContent =
+            new Date(invoice.fecha)
+            .toLocaleDateString('es-VE');
+
+        document.getElementById('invoiceTotal')
+            .textContent =
+            formatCurrency(invoice.total);
+
+        const tbody =
+            document.getElementById('invoiceItems');
+
+        tbody.innerHTML =
+            invoice.detalles.map(item => `
+                <tr>
+                    <td>${item.producto}</td>
+                    <td>${item.cantidad}</td>
+                    <td>${formatCurrency(item.precio)}</td>
+                    <td>${formatCurrency(item.total)}</td>
+                </tr>
+            `).join('');
+
+        document
+            .getElementById('invoiceModal')
+            .classList.add('active');
+
+    }catch(error){
+
+        console.error(error);
+
+    }
+
+}
+
+document
+.getElementById('closeInvoiceBtn')
+.addEventListener('click',()=>{
+
+    document
+        .getElementById('invoiceModal')
+        .classList.remove('active');
+
+});
+
+document
+.getElementById('downloadInvoiceBtn')
+.addEventListener('click',()=>{
+
+    window.print();
+
+});
+
+window.openEditClient = async function(id){
+
+    try{
+
+        const response =
+            await apiRequest(`client/${id}`);
+
+        const client =
+            response.client;
+
+        document.getElementById(
+            'editClientId'
+        ).value = client.id_cliente;
+
+        document.getElementById(
+            'editClientName'
+        ).value = client.nombre;
+
+        document.getElementById(
+            'editClientEmail'
+        ).value = client.correo;
+
+        document.getElementById(
+            'editClientPhone'
+        ).value = client.telefono;
+
+        document.getElementById(
+            'editClientAddress'
+        ).value = client.direccion;
+
+        document
+            .getElementById('clientModal')
+            .classList.add('active');
+
+    }catch(error){
+
+        console.error(error);
+
+    }
+
+}
+
+document
+.getElementById('saveClientBtn')
+.addEventListener('click',async()=>{
+
+    const id =
+        document.getElementById(
+            'editClientId'
+        ).value;
+
+    await apiRequest(`client/${id}`,{
+
+        method:'PUT',
+
+        body:{
+
+            nombre:
+                document.getElementById(
+                    'editClientName'
+                ).value,
+
+            correo:
+                document.getElementById(
+                    'editClientEmail'
+                ).value,
+
+            telefono:
+                document.getElementById(
+                    'editClientPhone'
+                ).value,
+
+            direccion:
+                document.getElementById(
+                    'editClientAddress'
+                ).value
+        }
+
+    });
+
+    document
+        .getElementById('clientModal')
+        .classList.remove('active');
+
+    loadClients();
+
+});
+
+window.deleteClient = async function(id){
+
+    const confirmar =
+        confirm(
+            '¿Desea eliminar este cliente?'
+        );
+
+    if(!confirmar) return;
+
+    await apiRequest(`client/${id}`,{
+
+        method:'DELETE'
+
+    });
+
+    loadClients();
+
+}
+
+document
+.getElementById('cancelClientBtn')
+.addEventListener('click',()=>{
+
+    document
+        .getElementById('clientModal')
+        .classList.remove('active');
+
+});

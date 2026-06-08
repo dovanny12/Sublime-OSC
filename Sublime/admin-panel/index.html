@@ -400,7 +400,11 @@
                             <td>31/03/2026</td>
                             <td>2 producto(s)</td>
                             <td>$64.97</td>
-                            <td>Ver Detalle</td>
+                            <td>
+                                <button class="btn secondary" onclick="openInvoiceModal('INV-001')">
+                                    Ver Detalle
+                                </button>
+                            </td>
                         </tr>
 
                     </tbody>
@@ -1107,6 +1111,136 @@
             <button
                 id="cancelEditBtn"
                 class="cancel-btn">
+
+                Cancelar
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- MODAL FACTURA -->
+
+<div id="invoiceModal" class="invoice-modal">
+
+    <div class="invoice-content">
+
+        <div id="invoiceContainer">
+
+            <div class="invoice-header">
+
+                <div>
+                    <h1 class="brand">SUBLIME</h1>
+                    <p>Sistema de Ventas</p>
+                </div>
+
+                <div class="invoice-title">
+                    <h1>FACTURA</h1>
+                    <p id="invoiceNumber">INV-001</p>
+                </div>
+
+            </div>
+
+            <div class="invoice-info">
+
+                <div>
+                    <h3>Facturado a:</h3>
+                    <p id="invoiceClient">Cliente</p>
+                </div>
+
+                <div>
+                    <h3>Fecha:</h3>
+                    <p id="invoiceDate">01/01/2026</p>
+                </div>
+
+            </div>
+
+            <table class="invoice-table">
+
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unit.</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+
+                <tbody id="invoiceItems">
+                </tbody>
+
+            </table>
+
+            <div class="invoice-total">
+
+                <span>TOTAL</span>
+
+                <span id="invoiceTotal">$0.00</span>
+
+            </div>
+
+            <div class="invoice-footer">
+
+                <p>Gracias por su compra</p>
+
+                <p>Sublime Store - Sistema de Ventas</p>
+
+            </div>
+
+        </div>
+
+        <div class="invoice-actions">
+
+            <button id="downloadInvoiceBtn">
+
+                Descargar / Imprimir
+
+            </button>
+
+            <button id="closeInvoiceBtn">
+
+                Cerrar
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="clientModal" class="client-modal">
+
+    <div class="client-modal-content">
+
+        <h2>Editar Cliente</h2>
+
+        <input type="hidden" id="editClientId">
+
+        <label>Nombre</label>
+        <input type="text" id="editClientName">
+
+        <label>Correo</label>
+        <input type="email" id="editClientEmail">
+
+        <label>Teléfono</label>
+        <input type="text" id="editClientPhone">
+
+        <label>Dirección</label>
+        <input type="text" id="editClientAddress">
+
+        <div class="client-modal-actions">
+
+            <button id="saveClientBtn">
+
+                Guardar
+
+            </button>
+
+            <button id="cancelClientBtn">
 
                 Cancelar
 
