@@ -115,9 +115,53 @@ def init_db():
                 ('Administrador', 'admin@sublime.com', 'admin123', 1)
             )
 
+    seed_sample_sale(cursor)
+
     conn.commit()
     cursor.close()
     conn.close()
+
+
+def seed_sample_sale(cursor):
+    """Crea una venta de ejemplo si todavía no hay ninguna registrada,
+    para que el botón "Ver Detalle" de facturas tenga datos que mostrar."""
+    ph = '%s' if USE_MYSQL else '?'
+
+    cursor.execute('SELECT COUNT(*) FROM ventas')
+    if cursor.fetchone()[0] > 0:
+        return
+
+    cursor.execute('SELECT id_producto, precio_venta FROM productos ORDER BY id_producto LIMIT 2')
+    productos = cursor.fetchall()
+    if len(productos) < 1:
+        return
+
+    cursor.execute('SELECT id_cliente FROM clientes ORDER BY id_cliente LIMIT 1')
+    cliente = cursor.fetchone()
+    if cliente:
+        cliente_id = cliente[0]
+    else:
+        cursor.execute(
+            f'INSERT INTO clientes (nombre, telefono, correo, direccion) VALUES ({ph}, {ph}, {ph}, {ph})',
+            ('Juan Pérez', '0412-0000000', 'juan.perez@sublime.com', 'Av. Principal, Local 1')
+        )
+        cliente_id = cursor.lastrowid
+
+    items = [(prod_id, float(precio), 2 if i == 0 else 1) for i, (prod_id, precio) in enumerate(productos)]
+    total = sum(precio * cantidad for _, precio, cantidad in items)
+
+    cursor.execute(
+        f'INSERT INTO ventas (id_cliente, total) VALUES ({ph}, {ph})',
+        (cliente_id, total)
+    )
+    venta_id = cursor.lastrowid
+
+    for prod_id, precio, cantidad in items:
+        cursor.execute(
+            f'INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario) '
+            f'VALUES ({ph}, {ph}, {ph}, {ph})',
+            (venta_id, prod_id, cantidad, precio)
+        )
 
 
 init_db()
@@ -254,6 +298,36 @@ def invoices():
     ).fetchall()
     conn.close()
     return jsonify({'invoices': [dict(row) for row in invoices]})
+
+@app.route('/api/invoice/<int:invoice_id>', methods=['GET'])
+def invoice_detail(invoice_id):
+    ph = '%s' if USE_MYSQL else '?'
+    conn = get_db()
+
+    venta = conn.execute(
+        'SELECT v.id_venta AS id, c.nombre AS cliente, v.fecha, IFNULL(v.total, 0) AS total '
+        'FROM ventas v LEFT JOIN clientes c ON v.id_cliente = c.id_cliente '
+        f'WHERE v.id_venta = {ph}',
+        (invoice_id,)
+    ).fetchone()
+
+    if not venta:
+        conn.close()
+        return jsonify({'message': 'Factura no encontrada.'}), 404
+
+    detalles = conn.execute(
+        'SELECT p.nombre AS producto, d.cantidad AS cantidad, '
+        'IFNULL(d.precio_unitario, 0) AS precio, '
+        'IFNULL(d.cantidad * d.precio_unitario, 0) AS total '
+        'FROM detalle_ventas d LEFT JOIN productos p ON d.id_producto = p.id_producto '
+        f'WHERE d.id_venta = {ph}',
+        (invoice_id,)
+    ).fetchall()
+    conn.close()
+
+    invoice = dict(venta)
+    invoice['detalles'] = [dict(row) for row in detalles]
+    return jsonify(invoice)
 
 @app.route('/api/sales-data', methods=['GET'])
 def sales_data():
