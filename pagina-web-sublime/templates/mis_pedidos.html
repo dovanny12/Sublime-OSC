@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/catalogo.css') }}">
+<style>
+.orders-page {
+    margin: 4rem auto 3rem;
+    max-width: 1200px;
+    padding: 0 5%;
+}
+
+.orders-hero {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.orders-hero h1 {
+    font-size: clamp(2.8rem, 4vw, 3.8rem);
+    letter-spacing: -1px;
+    margin-bottom: 1rem;
+}
+
+.orders-hero p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.orders-list {
+    display: grid;
+    gap: 24px;
+}
+
+.order-card {
+    background: var(--section-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(0, 179, 80, 0.45);
+}
+
+.order-summary {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: flex-start;
+}
+
+.order-summary-left h3,
+.order-summary-right p {
+    margin: 0;
+}
+
+.order-summary-left p,
+.order-summary-right p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.order-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+    align-items: center;
+}
+
+.order-chip {
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+
+.order-chip.shipment {
+    background: rgba(0, 255, 128, 0.12);
+    color: #05b75f;
+}
+
+.order-chip.tracking {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+}
+
+.order-actions {
+    margin-top: 16px;
+}
+
+.order-actions .btn-secondary {
+    border-radius: 16px;
+    padding: 12px 24px;
+}
+
+.empty-catalog {
+    text-align: center;
+    padding: 60px 24px;
+    background: var(--section-bg);
+    border: 1px dashed var(--border-color);
+    border-radius: 24px;
+}
+
+.empty-catalog h2 {
+    margin-bottom: 18px;
+}
+
+.empty-catalog p {
+    margin-bottom: 24px;
+    color: var(--text-muted);
+}
+
+.order-detail-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(13, 13, 13, 0.85);
+    padding: 2rem 1rem;
+    overflow-y: auto;
+}
+
+.order-detail-card {
+    background: var(--section-bg);
+    border-radius: 30px;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px;
+    position: relative;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+}
+
+.order-detail-header {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.order-detail-header h2 {
+    margin: 0;
+}
+
+.order-detail-header .order-detail-info p {
+    margin: 6px 0;
+    color: var(--text-muted);
+}
+
+.close-order-modal {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.order-items-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.order-item-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 18px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 22px;
+    padding: 22px;
+    align-items: center;
+}
+
+.order-item-card strong {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.order-item-card p {
+    margin: 4px 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.order-item-total {
+    text-align: right;
+    font-weight: 700;
+    min-width: 130px;
+}
+
+@media (max-width: 780px) {
+    .order-summary {
+        flex-direction: column;
+    }
+    .order-item-card {
+        grid-template-columns: 1fr;
+        text-align: left;
+    }
+    .order-item-total {
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="orders-page">
+    <div class="orders-hero">
+        <h1>Mis Pedidos</h1>
+        <p>Revisa tu historial de compras y consulta el detalle de cada pedido en una vista limpia y moderna.</p>
+    </div>
+
+    <div id="ordersList" class="orders-list">
+        <div class="empty-catalog"><h2>Cargando tus pedidos...</h2></div>
+    </div>
+</div>
+
+<div id="orderDetailModal" class="order-detail-modal">
+    <div class="order-detail-card">
+        <button id="closeOrderDetail" class="close-order-modal">&times;</button>
+        <div class="order-detail-header">
+            <div>
+                <h2 id="detailTitle">Detalle del Pedido</h2>
+            </div>
+            <div class="order-detail-info">
+                <p id="detailStatus"></p>
+                <p id="detailTotal"></p>
+            </div>
+        </div>
+        <div id="orderDetailContent"></div>
+    </div>
+</div>
+
+<script>
+function formatCurrency(value) {
+    return new Intl.NumberFormat('es-VE', { style:'currency', currency:'USD' }).format(value);
+}
+
+async function fetchOrders() {
+    try {
+        const res = await fetch('/api/orders');
+        const data = await res.json();
+        const ordersList = document.getElementById('ordersList');
+
+        if (!res.ok) {
+            ordersList.innerHTML = `<div class="empty-catalog"><h2>${data.mensaje || 'No se pudo cargar el historial.'}</h2></div>`;
+            return;
+        }
+
+        const orders = data.pedidos || [];
+        if (!orders.length) {
+            ordersList.innerHTML = `
+                <div class="empty-catalog">
+                    <h2>No tienes pedidos todavía.</h2>
+                    <p>Haz tu primera compra y revisa el historial aquí.</p>
+                    <a href="{{ url_for('catalogo') }}" class="btn-primary">Ir al catálogo</a>
+                </div>
+            `;
+            return;
+        }
+
+        ordersList.innerHTML = orders.map(order => `
+            <article class="order-card">
+                <div class="order-summary">
+                    <div class="order-summary-left">
+                        <h3>Pedido #${order.id}</h3>
+                        <p>Fecha: ${new Date(order.fecha).toLocaleDateString('es-VE')}</p>
+                    </div>
+                    <div class="order-summary-right">
+                        <p>Total: <strong>${formatCurrency(order.total)}</strong></p>
+                        <p>Estado: <strong>${order.estado}</strong></p>
+                    </div>
+                </div>
+                <div class="order-chips">
+                    <span class="order-chip shipment">Envío: ${order.empresa_envio || 'Sin asignar'}</span>
+                    <span class="order-chip tracking">Guía: ${order.numero_guia || 'Pendiente'}</span>
+                    <div class="order-actions">
+                        <button type="button" onclick="showOrderDetail(${order.id})" class="btn-secondary">Ver detalle</button>
+                    </div>
+                </div>
+            </article>
+        `).join('');
+    } catch (error) {
+        document.getElementById('ordersList').innerHTML = `<div class="empty-catalog"><h2>Error cargando el historial.</h2></div>`;
+        console.error(error);
+    }
+}
+
+async function showOrderDetail(orderId) {
+    try {
+        const res = await fetch(`/api/order/${orderId}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.mensaje || 'No se pudo cargar el pedido.');
+            return;
+        }
+
+        const pedido = data.pedido;
+        const items = data.items || [];
+
+        document.getElementById('detailTitle').textContent = `Pedido #${pedido.id}`;
+        document.getElementById('detailStatus').textContent = `Estado: ${pedido.estado}`;
+        document.getElementById('detailTotal').textContent = `Total: ${formatCurrency(pedido.total)}`;
+
+        const content = document.getElementById('orderDetailContent');
+        content.innerHTML = `
+            <div class="order-detail-header" style="margin-bottom:1.5rem;">
+                <div>
+                    <p style="margin:0; color:var(--text-muted);">Cliente: ${pedido.cliente}</p>
+                    <p style="margin:0; color:var(--text-muted);">Correo: ${pedido.cliente_correo}</p>
+                    <p style="margin:0; color:var(--text-muted);">Dirección: ${pedido.direccion || 'No disponible'}</p>
+                    <p style="margin:0; color:var(--text-muted);">Referencia: ${pedido.reference || 'Sin referencia'}</p>
+                </div>
+            </div>
+            <div class="order-items-grid">
+                ${items.map(item => `
+                    <div class="order-item-card">
+                        <div>
+                            <strong>${item.name}</strong>
+                            <p>Cantidad: ${item.quantity}</p>
+                            <p>Precio unitario: ${formatCurrency(item.price)}</p>
+                        </div>
+                        <div class="order-item-total">${formatCurrency(item.total)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        document.getElementById('orderDetailModal').style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        alert('Error al cargar el detalle del pedido.');
+    }
+}
+
+function closeOrderDetail() {
+    document.getElementById('orderDetailModal').style.display = 'none';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    fetchOrders();
+    document.getElementById('closeOrderDetail').addEventListener('click', closeOrderDetail);
+    document.getElementById('orderDetailModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('orderDetailModal')) {
+            closeOrderDetail();
+        }
+    });
+});
+</script>
+{% endblock %}

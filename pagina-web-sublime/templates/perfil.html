@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+
+    <!-- Header del perfil -->
+    <div class="profile-hero reveal">
+        <div class="profile-avatar">
+            <i class="fa-solid fa-user"></i>
+        </div>
+        <div class="profile-hero-info">
+            <h1 class="hero-title-solid" style="font-size: 2.2rem; margin-bottom: 5px;">{{ user.username }}</h1>
+            <p style="color: var(--text-muted);">{{ user.email or 'Sin correo registrado' }}</p>
+        </div>
+    </div>
+
+    <div class="profile-grid">
+
+        <!-- Panel izquierdo: edición de datos -->
+        <div class="profile-left">
+
+            <!-- Cambiar Contraseña -->
+            <div class="profile-card reveal">
+                <div class="profile-card-header">
+                    <i class="fa-solid fa-lock"></i>
+                    <h2>Cambiar Contraseña</h2>
+                </div>
+                <form method="POST" action="{{ url_for('perfil') }}" class="profile-form">
+                    <input type="hidden" name="action" value="cambiar_password">
+                    <div class="form-group">
+                        <label>Contraseña actual</label>
+                        <input type="password" name="current_password" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nueva contraseña</label>
+                        <input type="password" name="new_password" placeholder="Mínimo 6 caracteres" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar nueva contraseña</label>
+                        <input type="password" name="confirm_password" placeholder="Repite la nueva contraseña" required>
+                    </div>
+                    <button type="submit" class="btn-primary profile-btn">
+                        <i class="fa-solid fa-key"></i> Actualizar contraseña
+                    </button>
+                </form>
+            </div>
+
+            <!-- Cambiar Correo -->
+            <div class="profile-card reveal">
+                <div class="profile-card-header">
+                    <i class="fa-solid fa-envelope"></i>
+                    <h2>Correo Electrónico</h2>
+                </div>
+                <form method="POST" action="{{ url_for('perfil') }}" class="profile-form">
+                    <input type="hidden" name="action" value="cambiar_email">
+                    <div class="form-group">
+                        <label>Correo actual</label>
+                        <input type="text" value="{{ user.email or 'Sin correo registrado' }}" disabled class="input-disabled">
+                    </div>
+                    <div class="form-group">
+                        <label>Nuevo correo electrónico</label>
+                        <input type="email" name="new_email" placeholder="nuevo@correo.com" required>
+                    </div>
+                    <button type="submit" class="btn-primary profile-btn">
+                        <i class="fa-solid fa-envelope-circle-check"></i> Actualizar correo
+                    </button>
+                </form>
+            </div>
+
+            <!-- Cambiar Teléfono -->
+            <div class="profile-card reveal">
+                <div class="profile-card-header">
+                    <i class="fa-solid fa-phone"></i>
+                    <h2>Número de Teléfono</h2>
+                </div>
+                <form method="POST" action="{{ url_for('perfil') }}" class="profile-form">
+                    <input type="hidden" name="action" value="cambiar_telefono">
+                    <div class="form-group">
+                        <label>Teléfono de contacto</label>
+                        <input type="tel" name="phone" placeholder="+58 412 000 0000" value="{{ user.phone or '' }}">
+                    </div>
+                    <button type="submit" class="btn-primary profile-btn">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar teléfono
+                    </button>
+                </form>
+            </div>
+
+            <!-- Cerrar sesión -->
+            <div style="margin-top: 10px;">
+                <a href="{{ url_for('logout') }}" class="btn-danger-grad profile-btn" style="display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
+                </a>
+            </div>
+
+        </div>
+
+        <!-- Panel derecho: historial de compras -->
+        <div class="profile-right">
+            <div class="profile-card reveal">
+                <div class="profile-card-header">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <h2>Historial de Compras</h2>
+                </div>
+
+                {% if orders_with_items %}
+                    <div class="orders-list">
+                        {% for entry in orders_with_items %}
+                        <div class="order-entry">
+                            <div class="order-entry-header">
+                                <div>
+                                    <span class="order-id">#{{ entry.order.id }}</span>
+                                    <span class="order-status {{ 'status-pending' if entry.order.status == 'Pendiente de Verificación' else 'status-done' }}">
+                                        {{ entry.order.status }}
+                                    </span>
+                                </div>
+                                <span class="order-total">{{ format_price(entry.order.total) }}</span>
+                            </div>
+                            <p class="order-address"><i class="fa-solid fa-location-dot"></i> {{ entry.order.address }}</p>
+                            <p class="order-payment"><i class="fa-solid fa-credit-card"></i> {{ entry.order.payment_method or 'N/A' }}</p>
+                            <ul class="order-items-list">
+                                {% for item in entry.items %}
+                                <li>
+                                    <span>{{ item.name }}</span>
+                                    <span>{{ format_price(item.price) }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            <a href="{{ url_for('factura', order_id=entry.order.id) }}" class="btn-outline order-factura-btn">
+                                <i class="fa-solid fa-file-invoice"></i> Ver factura
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-orders">
+                        <i class="fa-solid fa-bag-shopping fa-3x"></i>
+                        <p>Aún no has realizado ninguna compra.</p>
+                        <a href="{{ url_for('catalogo') }}" class="btn-primary" style="margin-top: 15px; display: inline-block;">Explorar catálogo</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

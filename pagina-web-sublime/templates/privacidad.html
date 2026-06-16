@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="legal-page">
+
+    <div class="legal-hero reveal">
+        <div class="legal-icon">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+            <h1 class="hero-title-solid" style="font-size: 2.5rem; margin-bottom: 8px;">Política de Privacidad</h1>
+            <p style="color: var(--text-muted);">Última actualización: Mayo 2026</p>
+        </div>
+    </div>
+
+    <div class="legal-content reveal">
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-circle-info"></i> 1. Información que Recopilamos</h2>
+            <p>En <strong>Sublime's</strong> recopilamos la siguiente información cuando utilizas nuestros servicios:</p>
+            <ul>
+                <li><strong>Información de registro:</strong> nombre de usuario, correo electrónico y contraseña.</li>
+                <li><strong>Información de pedidos:</strong> dirección de entrega, método de pago y referencias de transacción.</li>
+                <li><strong>Información de contacto:</strong> número de teléfono (opcional).</li>
+                <li><strong>Datos de navegación:</strong> páginas visitadas y tiempo de sesión (uso interno).</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-database"></i> 2. Uso de la Información</h2>
+            <p>Utilizamos tu información únicamente para:</p>
+            <ul>
+                <li>Procesar y gestionar tus pedidos de productos personalizados.</li>
+                <li>Comunicarnos contigo sobre el estado de tu pedido.</li>
+                <li>Enviarte ofertas y novedades si te has suscrito a nuestro boletín (puedes cancelar en cualquier momento).</li>
+                <li>Mejorar la experiencia de usuario en nuestro sitio web.</li>
+                <li>Cumplir con obligaciones legales aplicables.</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-share-nodes"></i> 3. Compartición de Datos</h2>
+            <p><strong>No vendemos ni compartimos tu información personal con terceros</strong> con fines comerciales. Solo compartimos datos en los siguientes casos excepcionales:</p>
+            <ul>
+                <li>Con servicios de mensajería para gestionar la entrega de tus pedidos (únicamente los datos necesarios).</li>
+                <li>Cuando sea requerido por autoridades competentes en el marco de la ley.</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-lock"></i> 4. Seguridad de los Datos</h2>
+            <p>Tomamos medidas razonables para proteger tu información personal contra accesos no autorizados, pérdida o divulgación. Sin embargo, ningún sistema de transmisión por Internet es 100% seguro. Te recomendamos:</p>
+            <ul>
+                <li>Usar contraseñas únicas y seguras para tu cuenta.</li>
+                <li>No compartir tus credenciales de acceso con terceros.</li>
+                <li>Cerrar sesión cuando uses dispositivos compartidos.</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-cookie-bite"></i> 5. Cookies y Sesiones</h2>
+            <p>Utilizamos sesiones del navegador para mantener tu carrito de compras activo y gestionar tu inicio de sesión. Estas sesiones son temporales y se eliminan al cerrar el navegador o al cerrar sesión manualmente. No utilizamos cookies de rastreo publicitario de terceros.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-user-shield"></i> 6. Tus Derechos</h2>
+            <p>Como usuario, tienes derecho a:</p>
+            <ul>
+                <li><strong>Acceder</strong> a los datos personales que tenemos sobre ti.</li>
+                <li><strong>Rectificar</strong> información incorrecta desde tu perfil de usuario.</li>
+                <li><strong>Solicitar la eliminación</strong> de tu cuenta y datos asociados contactándonos directamente.</li>
+                <li><strong>Revocar</strong> el consentimiento para recibir comunicaciones de marketing en cualquier momento.</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-calendar-days"></i> 7. Retención de Datos</h2>
+            <p>Conservamos tu información mientras tu cuenta permanezca activa o según sea necesario para cumplir con los fines descritos en esta política. Los datos de pedidos se conservan por un período mínimo de 1 año para fines de soporte y garantía.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-rotate"></i> 8. Cambios en esta Política</h2>
+            <p>Podemos actualizar esta Política de Privacidad periódicamente. Te notificaremos sobre cambios significativos publicando la nueva versión en esta página. Te recomendamos revisarla regularmente.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-envelope"></i> 9. Contacto</h2>
+            <p>Si tienes preguntas o deseas ejercer alguno de tus derechos, contáctanos a través de nuestro WhatsApp o correo electrónico disponibles en el sitio.</p>
+        </div>
+
+    </div>
+
+    <div class="legal-footer-nav reveal">
+        <a href="{{ url_for('terminos') }}" class="btn-outline" style="display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-file-contract"></i> Ver Términos y Condiciones
+        </a>
+        <a href="{{ url_for('home') }}" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-house"></i> Volver al inicio
+        </a>
+    </div>
+
+</div>
+{% endblock %}

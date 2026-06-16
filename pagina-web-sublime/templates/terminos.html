@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="legal-page">
+
+    <div class="legal-hero reveal">
+        <div class="legal-icon">
+            <i class="fa-solid fa-file-contract"></i>
+        </div>
+        <div>
+            <h1 class="hero-title-solid" style="font-size: 2.5rem; margin-bottom: 8px;">Términos y Condiciones</h1>
+            <p style="color: var(--text-muted);">Última actualización: Mayo 2026</p>
+        </div>
+    </div>
+
+    <div class="legal-content reveal">
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-circle-info"></i> 1. Aceptación de los Términos</h2>
+            <p>Al acceder y utilizar los servicios de <strong>Sublime's</strong>, usted acepta estar sujeto a estos Términos y Condiciones. Si no está de acuerdo con alguna parte de estos términos, no podrá acceder al servicio.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-cart-shopping"></i> 2. Uso del Servicio</h2>
+            <p>Nuestros servicios están diseñados exclusivamente para fines lícitos. Usted se compromete a:</p>
+            <ul>
+                <li>Proporcionar información veraz y actualizada al realizar pedidos.</li>
+                <li>No utilizar el servicio para actividades fraudulentas o ilegales.</li>
+                <li>No reproducir, distribuir ni explotar comercialmente el contenido del sitio sin autorización escrita.</li>
+                <li>Mantener la confidencialidad de sus credenciales de acceso.</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-palette"></i> 3. Personalización y Derechos de Imagen</h2>
+            <p>Al subir imágenes o diseños para la personalización de productos, usted declara y garantiza que:</p>
+            <ul>
+                <li>Es el titular de los derechos de autor de las imágenes enviadas, o cuenta con las licencias necesarias para su uso comercial.</li>
+                <li>Las imágenes no infringen derechos de terceros, marcas registradas ni contienen contenido inapropiado.</li>
+                <li><strong>Sublime's</strong> no se hace responsable por el uso de imágenes con derechos de autor enviadas por el cliente.</li>
+            </ul>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-truck"></i> 4. Pedidos y Envíos</h2>
+            <p>Los pedidos quedan confirmados una vez verificado el pago. Los tiempos de producción y entrega son estimados y pueden variar según la demanda. <strong>Sublime's</strong> no se responsabiliza por demoras atribuibles a servicios de mensajería externos.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-rotate-left"></i> 5. Devoluciones y Reembolsos</h2>
+            <p>Dado que nuestros productos son personalizados y fabricados a pedido, <strong>no aceptamos devoluciones</strong> salvo en los siguientes casos:</p>
+            <ul>
+                <li>El producto recibido presenta defectos de fabricación.</li>
+                <li>El producto no corresponde al diseño o especificación confirmada al cliente.</li>
+            </ul>
+            <p>Las reclamaciones deben realizarse dentro de los <strong>5 días hábiles</strong> siguientes a la recepción del pedido, adjuntando fotografías del producto.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-credit-card"></i> 6. Precios y Pagos</h2>
+            <p>Todos los precios están expresados en la moneda indicada en el sitio. <strong>Sublime's</strong> se reserva el derecho de modificar precios sin previo aviso. El precio vigente al momento de confirmar el pedido será el aplicado a la transacción.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-gavel"></i> 7. Modificaciones</h2>
+            <p>Nos reservamos el derecho de actualizar estos Términos y Condiciones en cualquier momento. El uso continuado del servicio tras la publicación de cambios implica la aceptación de los nuevos términos.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2><i class="fa-solid fa-envelope"></i> 8. Contacto</h2>
+            <p>Para cualquier consulta relacionada con estos términos, puedes contactarnos a través de nuestro WhatsApp o correo electrónico indicados en el sitio.</p>
+        </div>
+
+    </div>
+
+    <div class="legal-footer-nav reveal">
+        <a href="{{ url_for('privacidad') }}" class="btn-outline" style="display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-shield-halved"></i> Ver Política de Privacidad
+        </a>
+        <a href="{{ url_for('home') }}" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-house"></i> Volver al inicio
+        </a>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,143 @@
+INSTRUCCIONES DE USO - SISTEMA SUBLIME
+========================================
+
+Este documento describe cómo ejecutar y utilizar la página web de Sublime y el panel administrativo integrado.
+
+REQUISITOS DEL SISTEMA
+======================
+- Python 3.8 o superior instalado
+- Navegador web moderno (Chrome, Firefox, Edge)
+- Conexión a internet para recursos externos opcionales
+
+INSTALACIÓN Y DEPENDENCIAS
+===========================
+1. Asegúrate de tener Python instalado:
+   - Abre una terminal y ejecuta: python --version
+   - Si no está instalado, descarga desde: https://www.python.org/
+
+2. Instala las dependencias del proyecto:
+   - Abre terminal en la carpeta raíz del proyecto
+   - Ejecuta: pip install flask flask-sqlalchemy
+
+3. Verifica los archivos del proyecto:
+   - Página principal del sitio: pagina-web-sublime/
+   - Panel administrativo: Sublime/admin-panel/
+   - Base de datos compartida: Sublime/BD/database.db
+
+EJECUTAR EL SERVIDOR UNIFICADO
+===============================
+1. Abre una terminal
+2. Navega a la carpeta raíz del proyecto:
+   cd "c:\Users\PC\OneDrive\Documentos\Universidad\Proyecto SC"
+
+3. Ejecuta el servidor unificado:
+   python pagina-web-sublime\app.py
+
+4. Abre el navegador en:
+   http://127.0.0.1:5000
+
+5. El panel administrativo se accede desde:
+   http://127.0.0.1:5000/admin
+
+CREDENCIALES ADMINISTRADOR POR DEFECTO
+======================================
+- Usuario: admin@sublime.com
+- Contraseña: admin123
+
+USO DE LA PÁGINA WEB
+=====================
+1. Navegación principal:
+   - Inicio: página principal con productos destacados
+   - Catálogo: ver todos los productos y filtrarlos
+   - Producto: ver detalles de un producto
+   - Carrito: revisar y gestionar los artículos seleccionados
+   - Checkout: completar la compra
+   - Registro/Login: crear cuenta y acceder al perfil
+
+2. Registro e inicio de sesión:
+   - Regístrate con nombre, correo y contraseña
+   - Inicia sesión con correo o nombre de usuario y contraseña
+   - Al iniciar sesión puedes ver tu perfil, historial de pedidos y carrito guardado
+
+3. Comprar productos:
+   - Selecciona productos desde el catálogo
+   - Haz clic en "Añadir" o "Agregar al carrito"
+   - Abre el carrito y procede al pago desde checkout
+
+4. Historial de pedidos:
+   - Inicia sesión como usuario
+   - Ve a la sección "/mis-pedidos" para ver tus compras
+
+USO DEL PANEL ADMINISTRATIVO
+============================
+1. Acceso:
+   - Ingresa a http://127.0.0.1:5000/admin
+   - Inicia sesión con correo y contraseña de administrador
+
+2. Funcionalidades principales:
+   - Dashboard: ver métricas generales de ventas, clientes y productos
+   - Inventario: revisar productos, stock y categorías
+   - Agregar producto: crear nuevos productos que se guardan en la DB
+   - Clientes: ver clientes registrados y gestionar información
+   - Facturas/Pedidos: consultar el historial de ventas y pedidos
+
+3. Flujo de alta de producto:
+   - Abre el modal "Agregar Producto"
+   - Ingresa nombre, categoría, precio, stock y descripción
+   - Guarda el producto
+   - El producto se almacena en la base de datos y aparecerá en el catálogo público
+
+BASE DE DATOS Y ARCHIVOS IMPORTANTES
+===================================
+- Archivo de base de datos SQLite: Sublime/BD/database.db
+- Script de creación de esquema: Sublime/BD/database.sql
+- APP unificada: pagina-web-sublime/app.py
+- Panel administrativo estático: Sublime/admin-panel/
+
+SOLUCIÓN DE PROBLEMAS
+=====================
+- Si el servidor no inicia:
+  - Verifica que Python esté instalado correctamente
+  - Revisa que no haya otro proceso usando el puerto 5000
+
+- Si la página no carga:
+  - Confirma que existe la base de datos en Sublime/BD/database.db
+  - Asegúrate de haber ejecutado el servidor desde la carpeta raíz del proyecto
+
+- Si el panel no abre o redirige:
+  - Inicia sesión primero en la página web y luego visita /admin
+
+- Si el producto no aparece en el catálogo:
+  - Verifica que el producto esté activo y tenga categoría asignada
+  - Reinicia el servidor si hiciste cambios en la base de datos manualmente
+
+NOTAS
+=====
+- El panel administrativo y la página web comparten la misma base de datos.
+- Cualquier producto creado desde el panel se refleja en la tienda pública si está activo.
+- Para usar la interfaz administrativa, primero debes autenticarte.
+
+- llaveros
+- placas
+
+INTEGRACIÓN ENTRE SISTEMAS
+==========================
+- Los productos agregados en el sistema administrativo aparecen automáticamente en la página web
+- Los usuarios registrados en la web pueden iniciar sesión en ambos sistemas
+- El carrito y pedidos se sincronizan entre la web y el administrativo
+
+DETENER LOS SERVIDORES
+======================
+- Para detener la página web: Presiona Ctrl+C en su terminal
+- Para detener el administrativo: Presiona Ctrl+C en su terminal
+- Ambos servidores pueden correr simultáneamente
+
+SOPORTE
+=======
+Si encuentras problemas:
+1. Verifica que ambos servidores estén corriendo en puertos diferentes (5000 y 3000)
+2. Revisa los mensajes de error en las terminales
+3. Asegúrate de que la base de datos esté accesible
+4. Verifica que no haya conflictos de puertos
+
+Para más ayuda, revisa los archivos de configuración o contacta al desarrollador.

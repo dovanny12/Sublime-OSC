@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cart.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="text-align: center; margin: 3rem 0;">
+    <h1 class="hero-title-solid" style="font-size: 3rem;">TU CARRITO</h1>
+</div>
+
+<div class="cart-container">
+    {% if cart %}
+        <div class="cart-items-wrapper">
+            {% for item in cart %}
+            <div class="cart-item-row">
+                <div>
+                    <h3 style="margin: 0;">{{ item.name }}</h3>
+                    {% if item.quantity and item.quantity > 1 %}
+                        <p style="margin: 8px 0 0; color: var(--text-muted);">Cantidad: {{ item.quantity }}</p>
+                    {% endif %}
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <p class="accent-text" style="margin: 0;">{{ format_price(item.price * item.quantity) }}</p>
+                    <a href="{{ url_for('eliminar_carrito', index=loop.index0) }}" class="btn-remove-item" title="Eliminar producto">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="cart-total-section">
+                <h2 style="margin: 0;">TOTAL:</h2>
+                <h2 class="accent-text" style="margin: 0;">{{ format_price(total) }}</h2>
+            </div>
+        </div>
+        
+        <div style="text-align: right;">
+            <a href="{{ url_for('checkout') }}" class="btn-primary">PROCEDER AL PAGO</a>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 50px; background: var(--section-bg); border-radius: 20px; border: 1px solid var(--border-color);">
+            <h2>Tu carrito está vacío</h2>
+            <p style="color: var(--text-muted); margin-top: 10px; margin-bottom: 20px;">Parece que aún no has añadido nada espectacular.</p>
+            <a href="{{ url_for('catalogo') }}" class="btn-secondary">Volver al Catálogo</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

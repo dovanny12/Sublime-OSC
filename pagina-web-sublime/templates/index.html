@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
+
+{% block content %}
+<header class="hero">
+    <div class="hero-slider">
+        <div class="hero-slide active" style="background-image: url('{{ url_for('static', filename='images/botella-agua-blanca-reutilizable_53876-145536.avif') }}');"></div>
+        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='images/pexels-cottonbro-5274535.jpg.jpeg') }}');"></div>
+        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='images/pexels-rdne-7842513.jpg.jpeg') }}');"></div>
+        <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='images/xuan-thu-le-2OXNxfTt3kQ-unsplash.jpg.jpeg') }}');"></div>
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1 class="hero-title-gradient">SUBLIMACIÓN</h1>
+        <h1 class="hero-title-solid">SIN LÍMITES</h1>
+        <p class="hero-desc">Diseños que explotan con color. Arte wearable que rompe todos los límites. Dale vida a tus ideas con la mejor calidad en sublimación.</p>
+        <div class="hero-actions">
+            <a href="{{ url_for('personalizar') }}" class="btn-primary">CREA TU DISEÑO</a>
+        </div>
+    </div>
+</header>
+
+<section class="section-padding categories-section reveal">
+    <div class="section-header text-center">
+        <h2 class="section-title">NUESTRAS CATEGORÍAS</h2>
+        <p class="section-subtitle">Explora nuestra amplia gama de productos listos para ser personalizados.</p>
+    </div>
+    <div class="category-grid">
+        <a href="{{ url_for('catalogo', categoria='Franela') }}" class="category-card tee-card" style="text-decoration: none; color: inherit; display: block;">
+            <i class="fa-solid fa-shirt fa-3x" style="margin-bottom: 15px;"></i>
+            <h3>FRANELAS</h3>
+            <p>50+ ARTÍCULOS</p>
+        </a>
+        <a href="{{ url_for('catalogo', categoria='Sudadera') }}" class="category-card hoodie-card" style="text-decoration: none; color: inherit; display: block;">
+            <i class="fa-solid fa-user-ninja fa-3x" style="margin-bottom: 15px;"></i>
+            <h3>SUDADERAS</h3>
+            <p>30+ ARTÍCULOS</p>
+        </a>
+        <a href="{{ url_for('catalogo', categoria='Accesorio') }}" class="category-card accessory-card" style="text-decoration: none; color: inherit; display: block;">
+            <i class="fa-solid fa-mug-hot fa-3x" style="margin-bottom: 15px;"></i>
+            <h3>ACCESORIOS</h3>
+            <p>25+ ARTÍCULOS</p>
+        </a>
+        <a href="{{ url_for('personalizar') }}" class="category-card custom-card" style="text-decoration: none; color: inherit; display: block;">
+            <i class="fa-solid fa-wand-magic-sparkles fa-3x" style="margin-bottom: 15px;"></i>
+            <h3>PERSONALIZADOS</h3>
+            <p>∞ POSIBILIDADES</p>
+        </a>
+    </div>
+</section>
+
+<section class="section-padding reveal">
+    <div class="section-header text-center">
+        <h2 class="section-title">¿CÓMO FUNCIONA?</h2>
+        <p class="section-subtitle">Tres simples pasos para obtener tu producto ideal.</p>
+    </div>
+    <div class="steps-grid">
+        <div class="step-item">
+            <div class="step-number">1</div>
+            <h3>Elige tu producto</h3>
+            <p>Selecciona entre franelas, tazas, sudaderas o accesorios de nuestra colección premium.</p>
+        </div>
+        <div class="step-item">
+            <div class="step-number">2</div>
+            <h3>Personaliza al máximo</h3>
+            <p>Sube tu imagen favorita o añade texto con nuestra herramienta de diseño intuitiva.</p>
+        </div>
+        <div class="step-item">
+            <div class="step-number">3</div>
+            <h3>Recibe en casa</h3>
+            <p>Nos encargamos de la impresión con tintas certificadas y el envío seguro hasta tu puerta.</p>
+        </div>
+    </div>
+</section>
+
+<section class="section-padding reveal" style="background: var(--section-bg);">
+    <div class="section-header text-center">
+        <h2 class="section-title">PRODUCTOS MÁS POPULARES</h2>
+        <p class="section-subtitle">Los productos favoritos de nuestros clientes. Calidad garantizada y siempre en tendencia.</p>
+    </div>
+    
+    <div class="products-grid">
+        {% for p in trending %}
+        <div class="product-card">
+            {% if loop.index == 1 %}
+            <div class="badge">Nuevo</div>
+            {% elif loop.index == 2 %}
+            <div class="badge">Bestseller</div>
+            {% endif %}
+            <div class="product-image">
+                <img src="{{ url_for('static', filename='images/' + p.image_url) }}" alt="{{ p.name }}">
+            </div>
+            <div class="product-info">
+                <div class="category-tag">{{ p.category }}</div>
+                <h3>{{ p.name }}</h3>
+                <p class="price">{{ format_price(p.price) }}</p>
+                <div class="card-actions">
+                    <a href="{{ url_for('producto', id=p.id) }}" class="btn-outline">Ver</a>
+                    <a href="{{ url_for('agregar_carrito', id=p.id) }}" class="btn-secondary">Añadir</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="section-padding reveal">
+    <div class="section-header text-center">
+        <h2 class="section-title">LO QUE DICEN NUESTROS CLIENTES</h2>
+        <p class="section-subtitle">La satisfacción de quienes ya confiaron en nosotros.</p>
+    </div>
+    <div class="testimonials-grid">
+        <div class="testimonial-card">
+            <i class="fa-solid fa-quote-right quote"></i>
+            <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <p>"La calidad de la sublimación es increíble, los colores son súper vibrantes y no se caen con las lavadas. Recomendados 100%!"</p>
+            <h4 style="margin-top: 20px;">- María González</h4>
+        </div>
+        <div class="testimonial-card">
+            <i class="fa-solid fa-quote-right quote"></i>
+            <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <p>"Mandé a hacer unos termos para mi empresa y quedaron perfectos. La asesoría en el diseño fue clave. ¡Muchas gracias!"</p>
+            <h4 style="margin-top: 20px;">- Carlos Pérez</h4>
+        </div>
+        <div class="testimonial-card">
+            <i class="fa-solid fa-quote-right quote"></i>
+            <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <p>"El proceso de personalización es muy sencillo y el envío llegó antes de lo esperado. Sin duda volveré a comprar."</p>
+            <h4 style="margin-top: 20px;">- Elena Rodríguez</h4>
+        </div>
+    </div>
+</section>
+
+<section class="newsletter-section reveal">
+    <h2 class="section-title">¡ÚNETE A LA COMUNIDAD!</h2>
+    <p>Suscríbete para recibir ofertas exclusivas, nuevos diseños y tips de personalización.</p>
+    <form class="newsletter-form" onsubmit="event.preventDefault(); alert('¡Gracias por suscribirte!');">
+        <input type="email" placeholder="Tu correo electrónico" required>
+        <button type="submit" class="btn-primary">SUSCRIBIRME</button>
+    </form>
+</section>
+
+<section class="section-padding reveal">
+    <div class="about-container">
+        <div class="about-text">
+            <h2>SOBRE SUBLIME'S</h2>
+            <p>En Sublime's, transformamos tus ideas en productos únicos y memorables. Somos especialistas en personalización por sublimación, una técnica que garantiza colores vibrantes y durabilidad excepcional.</p>
+            <p>Con más de 5 años de experiencia en el mercado, hemos ayudado a miles de clientes a crear productos personalizados para sus negocios, eventos especiales, regalos corporativos y uso personal.</p>
+        </div>
+        <div class="benefits-column">
+            <h3 style="margin-bottom: 20px;">Nuestros Beneficios</h3>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <i class="fa-solid fa-microchip fa-2x"></i>
+                    <h4>Equipos de última generación</h4>
+                </div>
+                <div class="benefit-item">
+                    <i class="fa-solid fa-droplet fa-2x"></i>
+                    <h4>Tintas certificadas de alta calidad</h4>
+                </div>
+                <div class="benefit-item">
+                    <i class="fa-solid fa-pen-nib fa-2x"></i>
+                    <h4>Asesoría personalizada en diseño</h4>
+                </div>
+                <div class="benefit-item">
+                    <i class="fa-solid fa-truck-fast fa-2x"></i>
+                    <h4>Envíos seguros a todo el país</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section-padding reveal text-center" style="border-top: 1px solid var(--border-color);">
+    <h2 class="hero-title-gradient" style="font-size: 3.5rem;">¿LISTO PARA CREAR?</h2>
+    <p class="section-subtitle">Empieza ahora y dale vida a tus ideas con la mejor calidad del mercado.</p>
+    <div style="margin-top: 30px;">
+        <a href="{{ url_for('personalizar') }}" class="btn-primary" style="padding: 20px 50px; font-size: 1.2rem;">EMPEZAR MI DISEÑO</a>
+    </div>
+</section>
+{% endblock %}

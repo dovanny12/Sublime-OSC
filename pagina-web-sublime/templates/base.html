@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sublime's</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    {% block page_css %}{% endblock %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <a href="{{ url_for('home') }}">
+                <img src="{{ url_for('static', filename='images/full_logo.png') }}" class="nav-logo-full" alt="Sublime's Logo">
+            </a>
+        </div>
+        <ul class="nav-links" style="margin-left: auto; align-items: center;">
+            <li><a href="{{ url_for('home') }}">Inicio</a></li>
+            <li><a href="{{ url_for('catalogo') }}">Catálogo</a></li>
+            <li><a href="{{ url_for('personalizar') }}">Personalizar</a></li>
+            <li><a href="javascript:void(0);" id="theme-toggle" title="Cambiar Tema"><i class="fa-solid fa-moon fa-lg"></i></a></li>
+            {% if session.get('user_id') %}
+                <li><a href="{{ url_for('mis_pedidos') }}">Mis Pedidos</a></li>
+                <li><a href="{{ url_for('perfil') }}" style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-circle-user fa-lg"></i> <span style="text-transform: none;">{{ session.get('username') }}</span></a></li>
+            {% else %}
+                <li><a href="{{ url_for('login') }}" style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-user fa-lg"></i> <span style="text-transform: none;">Iniciar sesión</span></a></li>
+            {% endif %}
+            <li class="cart-dropdown-container">
+                <a href="{{ url_for('carrito') }}" title="Carrito de Compras" class="cart-icon-link">
+                    <i class="fa-solid fa-cart-shopping fa-lg"></i>
+                    <span class="cart-badge">{{ cart_count|default(0) }}</span>
+                </a>
+                <div class="cart-dropdown" id="cartDropdown">
+                    <div class="cart-dropdown-header">
+                        <h4>Mi Carrito</h4>
+                        <span id="cartDropdownCount">0</span>
+                    </div>
+                    <div class="cart-dropdown-items" id="cartDropdownItems">
+                        <div class="cart-dropdown-empty">Cargando...</div>
+                    </div>
+                    <div class="cart-dropdown-footer" id="cartDropdownFooter" style="display:none;">
+                        <div class="cart-dropdown-total">
+                            <span>Total</span>
+                            <span id="cartDropdownTotal">$0.00</span>
+                        </div>
+                        <a href="{{ url_for('carrito') }}" class="btn-primary" style="width:100%;text-align:center;padding:14px;border-radius:12px;font-weight:700;font-size:1rem;">VER CARRITO</a>
+                    </div>
+                </div>
+            </li>
+        </ul>
+        <div class="burger-menu" id="burger-menu" style="margin-left: 20px;">
+            <span></span><span></span><span></span>
+        </div>
+    </nav>
+
+    <a href="https://wa.me/1234567890" class="whatsapp-float" target="_blank" title="Chatea con nosotros">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
+    <div class="content-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer>
+        <div class="footer-cols">
+            <div>
+                <h3 class="logo-footer">
+                    <img src="{{ url_for('static', filename='images/full_logo.png') }}" class="nav-logo-full" alt="Sublime's Logo">
+                </h3>
+                <p>Arte wearable que rompe límites.</p>
+                <div style="display: flex; gap: 15px; margin-top: 20px; font-size: 1.5rem;">
+                    <a href="#" style="color: var(--text-muted);"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" style="color: var(--text-muted);"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#" style="color: var(--text-muted);"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+            <div>
+                <h3>Tienda</h3>
+                <p><a href="{{ url_for('catalogo') }}">Todo</a></p>
+                <p><a href="{{ url_for('personalizar') }}">Personalizados</a></p>
+                <p><a href="{{ url_for('catalogo') }}">Catálogo</a></p>
+            </div>
+            <div>
+                <h3>Info</h3>
+                <p><a href="{{ url_for('contacto') }}">Contacto</a></p>
+                <p><a href="{{ url_for('ayuda') }}">Ayuda</a></p>
+                <p><a href="{{ url_for('terminos') }}">Términos y Condiciones</a></p>
+                <p><a href="{{ url_for('privacidad') }}">Política de Privacidad</a></p>
+            </div>
+            <div>
+                <h3>Boletín</h3>
+                <input type="email" placeholder="Correo electrónico" class="newsletter-input">
+                <button class="newsletter-btn">SUSCRIBIRSE</button>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2026 Página Sublime. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+    // logica del scroll
+    function reveal() {
+        var reveals = document.querySelectorAll(".reveal");
+        for (var i = 0; i < reveals.length; i++) {
+            var windowHeight = window.innerHeight;
+            var elementTop = reveals[i].getBoundingClientRect().top;
+            var elementVisible = 150;
+            if (elementTop < windowHeight - elementVisible) {
+                reveals[i].classList.add("active");
+            }
+        }
+    }
+    window.addEventListener("scroll", reveal);
+    reveal(); // control inicial
+
+    // logica de la FAQ
+    document.querySelectorAll('.faq-question').forEach(item => {
+        item.addEventListener('click', () => {
+            const parent = item.parentElement;
+            parent.classList.toggle('active');
+        });
+    });
+    </script>
+
+    <!-- Shein-style Add to Cart Modal -->
+    <div class="cart-modal-overlay" id="cartModal" role="dialog" aria-modal="true">
+        <div class="cart-modal">
+            <button class="cart-modal-close" id="cartModalClose" aria-label="Cerrar">&times;</button>
+            <div class="cart-modal-body" id="cartModalBody">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="cart-modal-footer">
+                <button class="btn-secondary cart-modal-continue" id="cartModalContinue">Seguir comprando</button>
+                <a href="{{ url_for('carrito') }}" class="btn-primary cart-modal-viewcart">Ver carrito</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

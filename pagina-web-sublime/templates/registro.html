@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container glass-card" style="text-align: center; position: relative; overflow: hidden; padding: 50px 40px; margin-top: 4rem; margin-bottom: 4rem; border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05); background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
+    <!-- Decoración de fondo -->
+    <div style="position: absolute; top: -100px; left: -100px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(0, 255, 128, 0.25) 0%, rgba(0, 0, 0, 0) 70%); filter: blur(40px); z-index: 0; animation: pulseGlow 7s ease-in-out infinite alternate;"></div>
+    <div style="position: absolute; bottom: -100px; right: -100px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(0, 179, 80, 0.2) 0%, rgba(0, 0, 0, 0) 70%); filter: blur(40px); z-index: 0; animation: pulseGlow 6s ease-in-out infinite alternate-reverse;"></div>
+    
+    <div style="position: relative; z-index: 1;">
+        <!-- Logo de la pagina (la taza con la S) -->
+        <div style="display: flex; justify-content: center; margin-bottom: 25px;">
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 15px; border-radius: 50%; box-shadow: 0 0 30px rgba(0, 255, 128, 0.15), inset 0 0 15px rgba(0, 255, 128, 0.1); border: 1px solid rgba(0, 255, 128, 0.2);">
+                <img src="{{ url_for('static', filename='images/logo_icon.png') }}" alt="Sublime's Logo" style="width: 80px; height: auto; filter: drop-shadow(0 0 10px rgba(0, 255, 128, 0.6)); animation: float 4s ease-in-out infinite;">
+            </div>
+        </div>
+        
+        <h1 style="font-size: 2.5rem; margin-bottom: 8px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(135deg, #ffffff 0%, #00ff80 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 4px 20px rgba(0, 255, 128, 0.2);">AGREGAR USUARIO</h1>
+        <p style="color: var(--text-muted); margin-bottom: 35px; font-size: 1rem; font-weight: 500;">Únete a Sublime's y crea tu cuenta hoy</p>
+        
+        <form action="{{ url_for('registro') }}" method="POST" style="text-align: left;">
+            <div class="input-group" style="margin-bottom: 20px; position: relative;">
+                <i class="fa-solid fa-user input-icon" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; z-index: 2; transition: all 0.3s ease;"></i>
+                <input type="text" name="username" placeholder="Nombre de Usuario" required class="glass-input">
+            </div>
+
+            <div class="input-group" style="margin-bottom: 20px; position: relative;">
+                <i class="fa-solid fa-envelope input-icon" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; z-index: 2; transition: all 0.3s ease;"></i>
+                <input type="email" name="email" placeholder="Correo Electrónico" required class="glass-input">
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 25px; position: relative;">
+                <i class="fa-solid fa-lock input-icon" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; z-index: 2; transition: all 0.3s ease;"></i>
+                <input type="password" name="password" id="password" placeholder="Contraseña" required class="glass-input">
+                <i class="fa-solid fa-eye-slash password-toggle" id="togglePassword" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; z-index: 2; transition: color 0.3s ease;"></i>
+            </div>
+            
+            <div class="auth-extras" style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 35px; font-size: 0.95rem;">
+                <label class="remember-me custom-checkbox" style="color: var(--text-muted);">
+                    <input type="checkbox" required>
+                    <span class="checkmark"></span>
+                    <span class="cb-text">Acepto los <a href="#" style="color: var(--accent-color); font-weight: 600; text-decoration: none; transition: all 0.3s;" class="hover-glow">Términos y Condiciones</a></span>
+                </label>
+            </div>
+            
+            <button type="submit" class="btn-primary glow-btn" style="width: 100%; padding: 16px; border-radius: 15px; font-size: 1.1rem; letter-spacing: 2px; border: none; cursor: pointer; text-transform: uppercase; font-weight: 900; background: var(--primary-grad); color: #000; position: relative; overflow: hidden;">
+                <span style="position: relative; z-index: 1;">REGISTRARSE</span>
+            </button>
+        </form>
+        
+        <div style="margin: 35px 0; position: relative; text-align: center;">
+            <hr style="border: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); margin: 0;">
+            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #141414; padding: 0 15px; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; border-radius: 20px;">O regístrate con</span>
+        </div>
+        
+        <div class="social-buttons" style="display: flex; gap: 15px; margin-bottom: 25px;">
+            <a href="#" class="social-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; border-radius: 50px; background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.5px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <i class="fa-brands fa-google" style="background: linear-gradient(135deg, #ea4335, #fbbc05, #34a853, #4285f4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.3rem;"></i> Google
+            </a>
+            <a href="#" class="social-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; border-radius: 50px; background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.5px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <i class="fa-brands fa-facebook-f" style="color: #1877f2; font-size: 1.3rem; text-shadow: 0 0 10px rgba(24, 119, 242, 0.4);"></i> Facebook
+            </a>
+        </div>
+        
+        <div style="margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.95rem;">¿Ya tienes una cuenta?</p>
+            <a href="{{ url_for('login') }}" class="btn-outline login-btn" style="display: inline-block; padding: 10px 25px; text-align: center; border-radius: 50px; border: 1px solid var(--accent-color); color: var(--accent-color); font-weight: 600; font-size: 0.85rem; letter-spacing: 1px; transition: all 0.3s; text-decoration: none; text-transform: uppercase; background: rgba(0, 255, 128, 0.05);">Iniciar sesión aquí</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes float {
+        0% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-8px) rotate(3deg); }
+        100% { transform: translateY(0px) rotate(0deg); }
+    }
+
+    @keyframes pulseGlow {
+        0% { opacity: 0.4; transform: scale(0.9); }
+        100% { opacity: 0.8; transform: scale(1.2); }
+    }
+    
+    .glass-input {
+        width: 100%; 
+        padding: 18px 20px 18px 50px; 
+        border-radius: 15px; 
+        background: rgba(255, 255, 255, 0.04); 
+        border: 1px solid rgba(255, 255, 255, 0.1); 
+        color: var(--text-color); 
+        font-size: 1.05rem; 
+        transition: all 0.3s ease; 
+        position: relative; 
+        z-index: 1; 
+        outline: none;
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .glass-input:focus {
+        border-color: var(--accent-color) !important;
+        box-shadow: 0 0 20px rgba(0, 255, 128, 0.2), inset 0 2px 5px rgba(0,0,0,0.2) !important;
+        background: rgba(0, 255, 128, 0.03) !important;
+        transform: translateY(-2px);
+    }
+
+    .input-group:focus-within .input-icon {
+        color: var(--accent-color) !important;
+        transform: translateY(-50%) scale(1.1);
+    }
+    
+    .social-btn:hover {
+        background: rgba(255,255,255,0.1) !important;
+        border-color: rgba(255,255,255,0.2) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3) !important;
+        color: #fff !important;
+    }
+
+    .login-btn:hover {
+        background: var(--accent-color) !important;
+        color: #000 !important;
+        box-shadow: 0 5px 20px rgba(0, 255, 128, 0.4) !important;
+        transform: translateY(-2px);
+    }
+    
+    .glow-btn::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transition: all 0.5s ease;
+        z-index: 0;
+    }
+
+    .glow-btn:hover::after {
+        left: 100%;
+    }
+
+    .glow-btn:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 15px 30px rgba(0, 255, 128, 0.4) !important;
+    }
+    
+    .password-toggle:hover {
+        color: var(--accent-color) !important;
+        transform: translateY(-50%) scale(1.1) !important;
+    }
+
+    /* Custom Checkbox Styling */
+    .custom-checkbox {
+        display: flex;
+        align-items: center;
+        position: relative;
+        padding-left: 28px;
+        cursor: pointer;
+        user-select: none;
+    }
+    .custom-checkbox input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+    .checkmark {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%);
+        height: 18px;
+        width: 18px;
+        background-color: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+    .custom-checkbox:hover input ~ .checkmark {
+        border-color: var(--accent-color);
+    }
+    .custom-checkbox input:checked ~ .checkmark {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+        box-shadow: 0 0 10px rgba(0, 255, 128, 0.4);
+    }
+    .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+    .custom-checkbox input:checked ~ .checkmark:after {
+        display: block;
+    }
+    .custom-checkbox .checkmark:after {
+        left: 6px;
+        top: 2px;
+        width: 4px;
+        height: 9px;
+        border: solid #000;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    .cb-text {
+        transition: color 0.3s ease;
+    }
+    .custom-checkbox:hover .cb-text {
+        color: #fff;
+    }
+</style>
+
+<script>
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+
+    togglePassword.addEventListener('click', function (e) {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        this.classList.toggle('fa-eye');
+        this.classList.toggle('fa-eye-slash');
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="auth-container glass-card" style="text-align: center; position: relative; overflow: hidden; padding: 50px 40px; margin-top: 4rem; margin-bottom: 4rem; border-radius: 25px; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05); background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
+    <!-- Decoración de fondo -->
+    <div style="position: absolute; top: -100px; right: -100px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(0, 255, 128, 0.3) 0%, rgba(0, 0, 0, 0) 70%); filter: blur(40px); z-index: 0; animation: pulseGlow 6s ease-in-out infinite alternate;"></div>
+    <div style="position: absolute; bottom: -100px; left: -100px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(0, 179, 80, 0.2) 0%, rgba(0, 0, 0, 0) 70%); filter: blur(40px); z-index: 0; animation: pulseGlow 8s ease-in-out infinite alternate-reverse;"></div>
+    
+    <div style="position: relative; z-index: 1;">
+        <!-- Logo de la pagina (la taza con la S) -->
+        <div style="display: flex; justify-content: center; margin-bottom: 25px;">
+            <div style="background: var(--section-bg); padding: 15px; border-radius: 50%; box-shadow: 0 0 30px rgba(0, 255, 128, 0.15), inset 0 0 15px rgba(0, 255, 128, 0.1); border: 1px solid rgba(0, 255, 128, 0.2);">
+                <img src="{{ url_for('static', filename='images/logo_icon.png') }}" alt="Sublime's Logo" style="width: 80px; height: auto; filter: drop-shadow(0 0 10px rgba(0, 255, 128, 0.6)); animation: float 4s ease-in-out infinite;">
+            </div>
+        </div>
+        
+        <h1 style="font-size: 2.5rem; margin-bottom: 8px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(135deg, #ffffff 0%, #00ff80 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 4px 20px rgba(0, 255, 128, 0.2);">INICIAR SESIÓN</h1>
+        <p style="color: var(--text-muted); margin-bottom: 35px; font-size: 1rem; font-weight: 500;">Ingresa a tu cuenta para continuar</p>
+        
+        <form id="formLogin" action="{{ url_for('login') }}" method="POST" style="text-align: left;">
+            <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+            <div class="input-group" style="margin-bottom: 20px; position: relative;">
+                <i class="fa-solid fa-envelope input-icon" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; z-index: 2; transition: all 0.3s ease;"></i>
+                <input type="text" id="usuario" name="username" placeholder="Usuario o Correo" required class="glass-input">
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 25px; position: relative;">
+                <i class="fa-solid fa-lock input-icon" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; z-index: 2; transition: all 0.3s ease;"></i>
+                <input type="password" name="password" id="password" placeholder="Contraseña" required class="glass-input">
+                <i class="fa-solid fa-eye-slash password-toggle" id="togglePassword" style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; z-index: 2; transition: color 0.3s ease;"></i>
+            </div>
+            
+            <div class="auth-extras" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; font-size: 0.95rem;">
+                <label class="remember-me custom-checkbox">
+                    <input type="checkbox" name="remember">
+                    <span class="checkmark"></span>
+                    <span class="cb-text">Recordarme</span>
+                </label>
+                <a href="#" class="forgot-password" style="color: var(--accent-color); text-decoration: none; font-weight: 600; transition: all 0.3s;">¿Olvidaste tu contraseña?</a>
+            </div>
+            
+            <div id="mensajeError" style="display:none; background-color: #ffdddd; color: #d8000c; padding: 12px; border-radius: 8px; font-weight: 700; margin-bottom: 16px; text-align: center; font-size: 0.95rem;"></div>
+            <button type="submit" class="btn-primary glow-btn" style="width: 100%; padding: 16px; border-radius: 15px; font-size: 1.1rem; letter-spacing: 2px; border: none; cursor: pointer; text-transform: uppercase; font-weight: 900; background: var(--primary-grad); color: #000; position: relative; overflow: hidden;">
+                <span style="position: relative; z-index: 1;">ENTRAR</span>
+            </button>
+        </form>
+        
+        <script src="{{ url_for('static', filename='login.js') }}"></script>
+        <div style="margin: 35px 0; position: relative; text-align: center;">
+            <hr style="border: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); margin: 0;">
+            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-color); padding: 0 15px; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; border-radius: 20px;">O continúa con</span>
+        </div>
+        
+        <div class="social-buttons" style="display: flex; gap: 15px; margin-bottom: 25px;">
+            <a href="#" class="social-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; border-radius: 50px; background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.5px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <i class="fa-brands fa-google" style="background: linear-gradient(135deg, #ea4335, #fbbc05, #34a853, #4285f4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.3rem;"></i> Google
+            </a>
+            <a href="#" class="social-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; border-radius: 50px; background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.5px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <i class="fa-brands fa-facebook-f" style="color: #1877f2; font-size: 1.3rem; text-shadow: 0 0 10px rgba(24, 119, 242, 0.4);"></i> Facebook
+            </a>
+        </div>
+        
+        <!-- Botón prominente pero elegante para agregar usuario -->
+        <div style="margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.95rem;">¿Eres nuevo en Sublime's?</p>
+            <a href="{{ url_for('registro') }}" class="btn-outline register-btn" style="display: inline-block; padding: 10px 25px; text-align: center; border-radius: 50px; border: 1px solid var(--accent-color); color: var(--accent-color); font-weight: 600; font-size: 0.85rem; letter-spacing: 1px; transition: all 0.3s; text-decoration: none; text-transform: uppercase; background: rgba(0, 255, 128, 0.05);">Agregar Usuario</a>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+    if (togglePassword && password) {
+        togglePassword.addEventListener('click', function (e) {
+            // alternar el atributo de tipo
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            // alternar el icono de la barra inclinada
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+    }
+
+    // Validación ligera del formulario antes de enviar
+    const formLogin = document.querySelector('#formLogin');
+    const inputUsuario = document.querySelector('#usuario');
+    const mensajeError = document.querySelector('#mensajeError');
+
+    if (formLogin) {
+        formLogin.addEventListener('submit', function (e) {
+            const userVal = inputUsuario ? inputUsuario.value.trim() : '';
+            const passVal = password ? password.value.trim() : '';
+            if (!userVal || !passVal) {
+                e.preventDefault();
+                if (mensajeError) {
+                    mensajeError.textContent = 'Por favor completa usuario y contraseña.';
+                    mensajeError.style.display = 'block';
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/help.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="legal-page" style="max-width: 980px;">
+
+    <div class="legal-hero reveal">
+        <div class="legal-icon">
+            <i class="fa-solid fa-book-open"></i>
+        </div>
+        <div>
+            <h1 class="hero-title-solid" style="font-size: 2.5rem; margin-bottom: 8px;">Centro de Ayuda</h1>
+            <p style="color: var(--text-muted);">Encuentra respuestas rápidas sobre el uso, pagos, envíos y personalización.</p>
+        </div>
+    </div>
+
+    <!-- Categorías rápidas -->
+    <div class="help-categories reveal">
+        <a href="#uso" class="help-cat-btn">
+            <i class="fa-solid fa-hand-pointer"></i>
+            <span>Cómo se usa</span>
+        </a>
+        <a href="#pagos" class="help-cat-btn">
+            <i class="fa-solid fa-credit-card"></i>
+            <span>Pagos</span>
+        </a>
+        <a href="#envios" class="help-cat-btn">
+            <i class="fa-solid fa-truck"></i>
+            <span>Envíos</span>
+        </a>
+        <a href="#personalizacion" class="help-cat-btn">
+            <i class="fa-solid fa-palette"></i>
+            <span>Personalización</span>
+        </a>
+    </div>
+
+    <!-- Sección: Cómo se usa -->
+    <div class="help-section reveal" id="uso">
+        <div class="help-section-title">
+            <div class="help-section-icon"><i class="fa-solid fa-hand-pointer"></i></div>
+            <h2>Cómo se Usa</h2>
+        </div>
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question">¿Necesito crear una cuenta para comprar? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">No es obligatorio. Puedes añadir productos al carrito y completar la compra sin registrarte. Sin embargo, al crear una cuenta podrás ver tu historial de pedidos y guardar tu información de contacto para futuras compras.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Cómo añado un producto al carrito? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">Desde el catálogo, haz clic en el botón <strong>Añadir</strong> de cualquier producto. También puedes ver los detalles del producto primero y luego añadirlo. El contador del carrito en la barra de navegación se actualizará automáticamente.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Puedo eliminar productos del carrito? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">Sí. En la página del carrito, cada producto tiene un ícono de 🗑️ (papelera) a la derecha. Haz clic en él para eliminar ese artículo de tu pedido antes de proceder al pago.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Cómo filtro los productos del catálogo? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">En la página de Catálogo encontrarás botones de categoría (Tazas, Camisetas, Sudaderas, etc.) y una barra de búsqueda por nombre. También puedes ordenar por precio o nombre usando el selector de ordenamiento.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección: Pagos -->
+    <div class="help-section reveal" id="pagos">
+        <div class="help-section-title">
+            <div class="help-section-icon"><i class="fa-solid fa-credit-card"></i></div>
+            <h2>Pagos</h2>
+        </div>
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question">¿Qué métodos de pago aceptan? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">Aceptamos transferencias bancarias, pagos móviles y efectivo (previa coordinación). Al completar tu pedido, selecciona el método de tu preferencia e indica el número de referencia de la transacción.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Es seguro ingresar mis datos de pago? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">No almacenamos datos bancarios. El proceso de pago se realiza fuera del sitio (transferencia directa), por lo que solo necesitas ingresar una referencia de confirmación. Tu información de contacto está protegida según nuestra <a href="{{ url_for('privacidad') }}" style="color: var(--accent-color);">Política de Privacidad</a>.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Cuándo se confirma mi pago? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">Una vez que realizas el pago y envías el número de referencia, nuestro equipo verifica la transacción en un máximo de <strong>24 horas hábiles</strong>. Recibirás confirmación por WhatsApp o correo electrónico.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Puedo cancelar un pedido después de pagar? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">Las cancelaciones deben solicitarse antes de que inicie la producción del pedido. Contáctanos lo antes posible por WhatsApp si necesitas cancelar. Consulta nuestros <a href="{{ url_for('terminos') }}" style="color: var(--accent-color);">Términos y Condiciones</a> para más detalles sobre reembolsos.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección: Envíos -->
+    <div class="help-section reveal" id="envios">
+        <div class="help-section-title">
+            <div class="help-section-icon"><i class="fa-solid fa-truck"></i></div>
+            <h2>Envíos</h2>
+        </div>
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question">¿Cuánto tiempo tarda en llegar mi pedido? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">El tiempo total incluye <strong>producción (3–5 días hábiles)</strong> más el tiempo de envío según tu ubicación. Para zonas locales puede ser 1–2 días adicionales; para otras regiones, entre 3–7 días hábiles.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Hacen envíos a todo el país? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">Sí, enviamos a todo el territorio nacional a través de empresas de mensajería de confianza. El costo y tiempo de envío varía según la distancia y la empresa de transporte disponible en tu zona.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Puedo rastrear mi pedido? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">Una vez despachado tu pedido, te enviaremos por WhatsApp el número de guía de la empresa de mensajería para que puedas rastrear tu envío en tiempo real desde su plataforma.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Qué pasa si mi pedido llega dañado? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">Si el producto llega dañado o con defectos de fabricación, contáctanos dentro de los <strong>5 días hábiles</strong> posteriores a la recepción con fotografías del producto y su empaque. Gestionaremos un reemplazo o solución sin costo adicional.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección: Personalización -->
+    <div class="help-section reveal" id="personalizacion">
+        <div class="help-section-title">
+            <div class="help-section-icon"><i class="fa-solid fa-palette"></i></div>
+            <h2>Personalización</h2>
+        </div>
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question">¿Qué formatos de imagen acepta el sistema? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">Para mejores resultados en la sublimación, recomendamos imágenes en formato <strong>PNG o JPG</strong> con alta resolución (mínimo 300 DPI). Imágenes de baja resolución pueden verse pixeladas en el producto final.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Puedo usar el logo o imagen de otra persona? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">Solo puedes usar imágenes sobre las que tienes derechos de autor o licencia para uso comercial. No imprimimos contenido que infrinja derechos de terceros, marcas registradas o material inapropiado. Consulta nuestros <a href="{{ url_for('terminos') }}" style="color: var(--accent-color);">Términos y Condiciones</a>.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Cómo sé cómo quedará el diseño en el producto? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">En la sección de <strong>Personalización</strong> del sitio puedes previsualizar cómo lucirá tu texto o imagen en el producto seleccionado. También puedes ajustar colores, tipografía, tamaño y posición antes de confirmar.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Ofrecen asesoría para el diseño? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">¡Sí! Si tienes una idea pero no sabes cómo plasmarla, nuestro equipo de diseño puede ayudarte. Escríbenos por WhatsApp o a través del <a href="{{ url_for('contacto') }}" style="color: var(--accent-color);">formulario de contacto</a> y con gusto te asesoramos sin costo adicional.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">¿Cuántas prendas mínimas necesito pedir? <i class="fa-solid fa-chevron-down"></i></div>
+                <div class="faq-answer">Trabajamos desde <strong>una sola unidad</strong>. No hay pedido mínimo. Sin embargo, para pedidos corporativos o en cantidad, ofrecemos precios especiales. Contáctanos para más información.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="help-cta reveal">
+        <i class="fa-solid fa-comments fa-2x" style="color: var(--accent-color); margin-bottom: 15px; display: block;"></i>
+        <h3>¿No encontraste tu respuesta?</h3>
+        <p>Escríbenos directamente y te respondemos a la brevedad.</p>
+        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+            <a href="{{ url_for('contacto') }}" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-paper-plane"></i> Enviar mensaje
+            </a>
+            <a href="https://wa.me/1234567890" target="_blank" class="btn-outline" style="display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fa-brands fa-whatsapp"></i> Abrir WhatsApp
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

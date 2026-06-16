@@ -1,0 +1,103 @@
+/* Legal page styles */
+.legal-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 5% 5rem;
+}
+
+.legal-hero {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    margin-bottom: 2.5rem;
+    padding: 30px 35px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
+}
+
+.legal-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 16px;
+    background: var(--primary-grad);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: #000;
+    flex-shrink: 0;
+}
+
+.legal-content {
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+}
+
+.legal-section {
+    padding: 28px 35px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.legal-section:last-child { border-bottom: none; }
+
+.legal-section h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-color);
+}
+
+.legal-section h2 i {
+    color: var(--accent-color);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.legal-section p {
+    color: var(--text-muted);
+    line-height: 1.8;
+    font-size: 0.97rem;
+    margin-bottom: 10px;
+}
+
+.legal-section p:last-child { margin-bottom: 0; }
+
+.legal-section ul {
+    margin: 10px 0 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.legal-section ul li {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.legal-footer-nav {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+body.light-mode .legal-hero,
+body.light-mode .legal-content {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 20px rgba(0,0,0,0.06);
+}
+
+@media (max-width: 600px) {
+    .legal-hero { flex-direction: column; text-align: center; }
+    .legal-section { padding: 22px 20px; }
+    .legal-footer-nav { justify-content: center; }
+}

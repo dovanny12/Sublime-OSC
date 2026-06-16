@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header" style="text-align: center; margin: 3rem 0;">
+    <h1 class="hero-title-solid" style="font-size: 3rem;">CHECKOUT</h1>
+</div>
+
+<div class="checkout-container" style="display: flex; gap: 40px; max-width: 1000px; margin: 0 auto; padding-bottom: 50px;">
+    
+    <div class="checkout-form" style="flex: 2; background: var(--card-bg); padding: 30px; border-radius: 15px; border: 1px solid var(--border-color);">
+        <h2 style="margin-bottom: 20px;">Dirección y Envío</h2>
+        <form action="{{ url_for('checkout') }}" method="POST">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px;">Nombre Completo</label>
+                <input type="text" name="name" required style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 5px;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px;">Dirección de Envío Completa</label>
+                <textarea name="address" required rows="3" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 5px;"></textarea>
+            </div>
+
+            <h2 style="margin: 30px 0 20px 0;">Método de Pago</h2>
+            <div class="payment-methods" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
+                <label style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer;">
+                    <input type="radio" name="payment_method" value="Transferencia" required onchange="togglePaymentDetails('transferencia')">
+                    <span><i class="fa-solid fa-building-columns"></i> Transferencia Bancaria</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer;">
+                    <input type="radio" name="payment_method" value="Pago Móvil" onchange="togglePaymentDetails('pagomovil')">
+                    <span><i class="fa-solid fa-mobile-screen"></i> Pago Móvil</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer;">
+                    <input type="radio" name="payment_method" value="Binance" onchange="togglePaymentDetails('binance')">
+                    <span><i class="fa-solid fa-coins"></i> Binance (USDT)</span>
+                </label>
+            </div>
+
+            <div id="transferencia-details" class="payment-info" style="display: none; padding: 20px; background: rgba(0, 179, 80, 0.1); border: 1px solid var(--primary-grad); border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin-bottom: 10px;">Datos de Transferencia:</h4>
+                <p>Banco: Banesco</p>
+                <p>Cuenta: 0134-XXXX-XXXX-XXXX-XXXX</p>
+                <p>Nombre: Sublime's C.A.</p>
+                <p>RIF: J-12345678-9</p>
+            </div>
+
+            <div id="pagomovil-details" class="payment-info" style="display: none; padding: 20px; background: rgba(0, 179, 80, 0.1); border: 1px solid var(--primary-grad); border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin-bottom: 10px;">Datos de Pago Móvil:</h4>
+                <p>Banco: Banesco (0134)</p>
+                <p>Teléfono: 0412-XXX-XXXX</p>
+                <p>Cédula: V-XX.XXX.XXX</p>
+            </div>
+
+            <div id="binance-details" class="payment-info" style="display: none; padding: 20px; background: rgba(0, 179, 80, 0.1); border: 1px solid var(--primary-grad); border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin-bottom: 10px;">Datos de Binance:</h4>
+                <p>Red: BEP20 </p>
+                <p>Billetera: 0x71C7656EC7ab88b098defB751B7401B5f6d8976F</p>
+                <p>Binance ID: 123456789</p>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <label style="display: block; margin-bottom: 10px;">Referencia de Pago</label>
+                <input type="text" name="reference" required placeholder="Nro de confirmación" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 5px;">
+            </div>
+            
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 20px;">FINALIZAR COMPRA</button>
+        </form>
+    </div>
+
+    <script>
+    function togglePaymentDetails(method) {
+        document.querySelectorAll('.payment-info').forEach(el => el.style.display = 'none');
+        document.getElementById(method + '-details').style.display = 'block';
+    }
+    </script>
+    
+    <div class="checkout-summary" style="flex: 1; background: var(--card-bg); padding: 30px; border-radius: 15px; border: 1px solid var(--border-color); height: fit-content;">
+        <h2 style="margin-bottom: 20px; color: var(--primary-grad);">Resumen</h2>
+        <p style="display: flex; justify-content: space-between;"><span>Subtotal:</span> <span>{{ format_price(total) }}</span></p>
+        <p style="display: flex; justify-content: space-between;"><span>Envío:</span> <span>{{ format_price(5.00) }}</span></p>
+        <hr style="border-color: var(--border-color); margin: 15px 0;">
+        <h3 style="display: flex; justify-content: space-between; color: var(--primary-grad);"><span>TOTAL:</span> <span>{{ format_price(total + 5.00) }}</span></h3>
+    </div>
+</div>
+{% endblock %}

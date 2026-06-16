@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/product.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="product-detail-container">
+    <div class="product-detail-image">
+        <img src="{{ url_for('static', filename='images/' + producto.image_url) }}" alt="{{ producto.name }}" style="width: 100%; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--card-shadow);">
+    </div>
+    <div class="product-detail-info">
+        <h1 class="hero-title-solid" style="font-size: 3rem; margin-bottom: 10px;">{{ producto.name }}</h1>
+        <div class="category-tag">{{ producto.category }}</div>
+        <p class="accent-text" style="font-size: 2.5rem; margin: 25px 0;">{{ format_price(producto.price) }}</p>
+        
+        <p style="color: var(--text-muted); margin-bottom: 40px; line-height: 1.8; font-size: 1.1rem;">
+            Impresión por sublimación de alta resolución. Colores que vibran con energía y no se desvanecen. Utilizamos materiales premium seleccionados para garantizar que tu diseño dure tanto como tus recuerdos.
+        </p>
+        
+        <button type="button" 
+                class="btn-primary btn-add-to-cart" 
+                data-product-id="{{ producto.id }}"
+                data-product-name="{{ producto.name }}"
+                data-product-price="{{ format_price(producto.price) }}"
+                data-product-image="{{ url_for('static', filename='images/' + producto.image_url) }}"
+                style="width: 100%; text-align: center; padding: 20px; font-size: 1.2rem;">
+            AÑADIR AL CARRITO
+        </button>
+    </div>
+</div>
+
+{% endblock %}

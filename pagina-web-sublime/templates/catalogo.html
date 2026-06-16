@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/catalogo.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header text-center" style="margin: 4rem 0;">
+    <h1 class="hero-title-solid" style="font-size: 3.5rem;">Nuestros Productos</h1>
+    <p class="section-subtitle">Explora nuestra amplia colección de productos personalizables. Todos de alta calidad y listos para tu diseño único.</p>
+</div>
+
+<div class="filter-container">
+    <a href="{{ url_for('catalogo') }}" class="filter-btn {{ 'active' if not request.args.get('categoria') }}">Todos</a>
+    {% for cat in categorias %}
+    <a href="{{ url_for('catalogo', categoria=cat) }}" class="filter-btn {{ 'active' if request.args.get('categoria') == cat }}">{{ cat }}</a>
+    {% endfor %}
+</div>
+
+<div class="catalog-controls">
+    <form action="{{ url_for('catalogo') }}" method="GET" class="search-box">
+        {% if request.args.get('categoria') %}
+        <input type="hidden" name="categoria" value="{{ request.args.get('categoria') }}">
+        {% endif %}
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" name="q" placeholder="Buscar productos..." value="{{ request.args.get('q', '') }}">
+    </form>
+    
+    <div class="sort-box">
+        <form action="{{ url_for('catalogo') }}" method="GET" id="sortForm">
+            {% if request.args.get('categoria') %}<input type="hidden" name="categoria" value="{{ request.args.get('categoria') }}">{% endif %}
+            {% if request.args.get('q') %}<input type="hidden" name="q" value="{{ request.args.get('q') }}">{% endif %}
+            <select name="sort" onchange="document.getElementById('sortForm').submit()">
+                <option value="newest" {{ 'selected' if request.args.get('sort') == 'newest' }}>Más recientes</option>
+                <option value="price_asc" {{ 'selected' if request.args.get('sort') == 'price_asc' }}>Precio: Menor a Mayor</option>
+                <option value="price_desc" {{ 'selected' if request.args.get('sort') == 'price_desc' }}>Precio: Mayor a Menor</option>
+                <option value="name_asc" {{ 'selected' if request.args.get('sort') == 'name_asc' }}>Nombre: A - Z</option>
+            </select>
+        </form>
+    </div>
+</div>
+
+<div class="products-grid reveal" style="margin-top: 1rem;">
+    {% for p in productos %}
+    <div class="product-card">
+        {% if loop.index == 1 and not request.args.get('q') %}
+        <div class="badge">Novedad</div>
+        {% endif %}
+        <div class="product-image">
+            <img src="{{ url_for('static', filename='images/' + p.image_url) }}" alt="{{ p.name }}">
+        </div>
+        <div class="product-info">
+            <div class="category-tag">{{ p.category }}</div>
+            <h3>{{ p.name }}</h3>
+            <p class="price">{{ format_price(p.price) }}</p>
+            <div class="card-actions">
+                <a href="{{ url_for('producto', id=p.id) }}" class="btn-outline">Ver</a>
+                <button type="button" 
+                        class="btn-secondary btn-add-to-cart"
+                        data-product-id="{{ p.id }}"
+                        data-product-name="{{ p.name }}"
+                        data-product-price="{{ format_price(p.price) }}"
+                        data-product-image="{{ url_for('static', filename='images/' + p.image_url) }}">
+                    Añadir
+                </button>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-catalog">
+        <i class="fa-solid fa-face-frown fa-4x"></i>
+        <h2 style="margin-top: 20px;">No encontramos lo que buscas</h2>
+        <p style="margin-bottom: 25px;">¿Tienes una idea específica? ¡Podemos crearla para ti!</p>
+        <a href="{{ url_for('personalizar') }}" class="btn-primary">PERSONALIZA TU PRODUCTO</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
