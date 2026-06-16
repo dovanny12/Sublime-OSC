@@ -347,7 +347,7 @@
             <div class="submit-bar">
                 <div class="submit-bar-info">
                     <span class="submit-price-label">Total estimado:</span>
-                    <span class="submit-price-value" id="submitPriceTotal">$30.00</span>
+                    <span class="submit-price-value" id="submitPriceTotal">{{ format_price(30.00) }}</span>
                 </div>
                 <button type="submit" class="btn-primary btn-submit-custom">
                     <i class="fa-solid fa-cart-shopping"></i> AÑADIR AL CARRITO
@@ -1142,7 +1142,12 @@ function updateCanvasTexture() {
     const shipping = 0.00;
     const total = base + custom + shipping;
 
-    function jsFormatPrice(v){ return '$' + Number(v).toFixed(2); }
+    const tasaCambio = {{ tasa_cambio|default(40.0) }};
+    function jsFormatPrice(v) {
+        const usd = '$' + Number(v).toFixed(2);
+        const bs = (v * tasaCambio).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/,/g, 'X').replace(/\./g, ',').replace(/X/g, '.') + ' Bs';
+        return usd + ' / ' + bs;
+    }
 
     document.getElementById('priceBase').innerText = jsFormatPrice(base);
     document.getElementById('priceCustom').innerText = jsFormatPrice(custom);

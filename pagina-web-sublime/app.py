@@ -214,7 +214,8 @@ def load_cart_from_db():
     carrito_id = get_or_create_cart(conn, cliente_id)
     
     items = conn.execute(
-        'SELECT dc.id_detalle, dc.id_producto, dc.cantidad, dc.precio_unitario, p.nombre AS name, p.descripcion '
+        'SELECT dc.id_detalle, dc.id_producto, dc.cantidad, dc.precio_unitario, p.nombre AS name, p.descripcion, '
+        '(SELECT ip.ruta_imagen FROM imagenes_productos ip WHERE ip.id_producto = p.id_producto ORDER BY ip.id_imagen LIMIT 1) AS image_url '
         'FROM detalle_carrito dc '
         'LEFT JOIN productos p ON dc.id_producto = p.id_producto '
         'WHERE dc.id_carrito = ? '
@@ -229,7 +230,8 @@ def load_cart_from_db():
             'name': item['name'] or 'Producto personalizado',
             'price': float(item['precio_unitario']),
             'quantity': item['cantidad'],
-            'details': item['descripcion'] or ''
+            'details': item['descripcion'] or '',
+            'image_url': item['image_url'] or 'placeholder.png'
         }
         for item in items
     ]
@@ -1131,6 +1133,20 @@ def carrito():
     else:
         cart = session.get('cart', [])
     
+    # Enrich session cart items with image_url
+    for item in cart:
+        if 'image_url' not in item or not item.get('image_url'):
+            if item.get('id'):
+                conn = get_shared_db()
+                row = conn.execute(
+                    'SELECT ruta_imagen FROM imagenes_productos WHERE id_producto = ? LIMIT 1',
+                    (item['id'],)
+                ).fetchone()
+                conn.close()
+                item['image_url'] = row['ruta_imagen'] if row else 'placeholder.png'
+            else:
+                item['image_url'] = 'placeholder.png'
+    
     total = sum(item['price'] * item.get('quantity', 1) for item in cart)
     return render_template('carrito.html', cart=cart, total=total, cart_count=len(cart))
 
@@ -1153,16 +1169,37 @@ def eliminar_carrito(index):
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     if 'user_id' in session:
-        cart = load_cart_from_db()
+        full_cart = load_cart_from_db()
     else:
-        cart = session.get('cart', [])
+        full_cart = session.get('cart', [])
     
-    if not cart:
+    if not full_cart:
         flash('Tu carrito está vacío.', 'error')
         return redirect(url_for('catalogo'))
 
+    # Handle selected indices from cart page (POST with selected_indices)
+    selected_indices = request.form.get('selected_indices')
+    if selected_indices:
+        try:
+            indices = json.loads(selected_indices)
+            if isinstance(indices, list) and len(indices) > 0:
+                session['checkout_items'] = [full_cart[i] for i in indices if i < len(full_cart)]
+                session.modified = True
+            else:
+                session['checkout_items'] = list(full_cart)
+        except (json.JSONDecodeError, TypeError, IndexError):
+            session['checkout_items'] = list(full_cart)
+        return redirect(url_for('checkout'))
+
+    # Use stored checkout items if available
+    if 'checkout_items' in session:
+        cart = session['checkout_items']
+    else:
+        cart = full_cart
+
     total = sum(item['price'] * item.get('quantity', 1) for item in cart)
-    if request.method == 'POST':
+
+    if request.method == 'POST' and request.form.get('name'):
         name = request.form.get('name')
         address = request.form.get('address')
         payment_method = request.form.get('payment_method')
@@ -1190,23 +1227,25 @@ def checkout():
                 (pedido_id, product_id, cantidad, item['price'])
             )
 
-        conn.execute(
-            'INSERT INTO envios (id_pedido, direccion_envio, empresa_envio, numero_guia, estado_envio, fecha_envio) VALUES (?, ?, ?, ?, ?, datetime("now"))',
-            (pedido_id, address, payment_method or 'Pendiente', reference or '', 'Pendiente',)
-        )
-        conn.commit()
-        conn.close()
+    conn.execute(
+        'INSERT INTO envios (id_pedido, direccion_envio, empresa_envio, numero_guia, estado_envio, fecha_envio) VALUES (?, ?, ?, ?, ?, datetime("now"))',
+        (pedido_id, address, payment_method or 'Pendiente', reference or '', 'Pendiente',)
+    )
+    conn.commit()
+    conn.close()
 
-        # Limpiar carrito
-        if 'user_id' in session:
-            save_cart_to_db([])
-        else:
-            session.pop('cart', None)
-        
-        return redirect(url_for('factura', order_id=pedido_id))
+    # Limpiar carrito y checkout
+    if 'checkout_items' in session:
+        session.pop('checkout_items', None)
+    if 'user_id' in session:
+        save_cart_to_db([])
+    else:
+        session.pop('cart', None)
+    
+    return redirect(url_for('factura', order_id=pedido_id))
 
     cart_count = len(cart)
-    return render_template('checkout.html', total=total, cart_count=cart_count)
+    return render_template('checkout.html', total=total, cart_count=cart_count, item_count=len(cart))
 
 @app.route('/factura/<int:order_id>')
 def factura(order_id):
