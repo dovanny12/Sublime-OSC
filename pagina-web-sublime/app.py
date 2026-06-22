@@ -42,21 +42,41 @@ os.makedirs(os.path.dirname(SHARED_DB_PATH), exist_ok=True)
 
 
 def ensure_shared_db():
-    # Debug: print paths
+
     print('SHARED_DB_PATH:', SHARED_DB_PATH)
     print('SHARED_SQL_PATH:', SHARED_SQL_PATH)
-    # Ensure the directory for the database exists
-    os.makedirs(os.path.dirname(SHARED_DB_PATH), exist_ok=True)
-    # Connect to the database (creates file if it does not exist)
+
+    os.makedirs(
+        os.path.dirname(SHARED_DB_PATH),
+        exist_ok=True
+    )
+
+    # Si la base de datos ya existe, no volver a ejecutar database.sql
+    if os.path.exists(SHARED_DB_PATH):
+
+        conn = sqlite3.connect(SHARED_DB_PATH)
+        conn.execute('PRAGMA foreign_keys = ON')
+        conn.close()
+
+        return
+
     conn = sqlite3.connect(SHARED_DB_PATH)
     conn.execute('PRAGMA foreign_keys = ON')
-    # Execute the schema script if it exists; CREATE TABLE IF NOT EXISTS protects existing tables
+
     if os.path.exists(SHARED_SQL_PATH):
-        with open(SHARED_SQL_PATH, 'r', encoding='utf-8') as f:
-            conn.executescript(f.read())
+
+        with open(
+            SHARED_SQL_PATH,
+            'r',
+            encoding='utf-8'
+        ) as f:
+
+            conn.executescript(
+                f.read()
+            )
+
     conn.commit()
     conn.close()
-
 
 def get_shared_db():
     ensure_shared_db()
@@ -126,8 +146,8 @@ def map_product_row(row):
         'image_url': row['ruta_imagen'] or 'placeholder.png',
         'description': row['descripcion'] or ''
     }
-
-
+ 
+ 
 seed_default_admin()
 
 def fetch_products(categoria=None, search_query=None, sort_option='newest', limit=None):
@@ -141,16 +161,16 @@ def fetch_products(categoria=None, search_query=None, sort_option='newest', limi
         'WHERE p.activo = 1 AND p.id_categoria IS NOT NULL '
     )
     params = ['placeholder.png']
-
+ 
     if categoria:
         sql += ' AND c.nombre = ? '
         params.append(categoria)
-
+ 
     if search_query:
         sql += ' AND (p.nombre LIKE ? OR p.descripcion LIKE ?) '
         term = f'%{search_query}%'
         params.extend([term, term])
-
+ 
     if sort_option == 'price_asc':
         sql += ' ORDER BY p.precio_venta ASC '
     elif sort_option == 'price_desc':
@@ -159,16 +179,16 @@ def fetch_products(categoria=None, search_query=None, sort_option='newest', limi
         sql += ' ORDER BY p.nombre ASC '
     else:
         sql += ' ORDER BY p.id_producto DESC '
-
+ 
     if limit:
         sql += ' LIMIT ? '
         params.append(limit)
-
+ 
     rows = conn.execute(sql, params).fetchall()
     conn.close()
     return [map_product_row(row) for row in rows]
-
-
+ 
+ 
 def fetch_product_by_id(product_id):
     conn = get_shared_db()
     row = conn.execute(
@@ -181,7 +201,6 @@ def fetch_product_by_id(product_id):
     ).fetchone()
     conn.close()
     return map_product_row(row) if row else None
-
 
 def user_can_review(user_email, product_id):
     if not user_email:
@@ -1974,4 +1993,8 @@ def mis_pedidos():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
