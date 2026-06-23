@@ -7,6 +7,19 @@
 
 <link rel="stylesheet" href="styles.css">
 
+<style>
+    @media print {
+        body * { visibility: hidden; }
+        #invoiceModal.active,
+        #invoiceModal.active * { visibility: visible; }
+        #invoiceModal.active { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 999999; }
+        #invoiceModal.active .invoice-actions { display: none !important; }
+        #invoiceModal.active .invoice-content { max-width: 100%; box-shadow: none; border-radius: 0; padding: 20px; }
+        .sidebar, .main-content, .page-section, .invoice-modal:not(.active) { display: none !important; }
+        @page { margin: 10mm; }
+    }
+</style>
+
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -67,10 +80,6 @@
             <h1 id="pageTitle">Bienvenido, Admin!</h1>
 
             <div class="topbar-actions">
-                <!-- BOTÓN SOLO DASHBOARD -->
-                <button class="btn dashboard-report-btn" id="openModal">
-                    Generar Reporte
-                </button>
             </div>
 
         </div>
@@ -210,11 +219,20 @@
                 <div class="box cart-box">
 
                     <h3>Carrito</h3>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;" id="cartClientLabel">Seleccione un cliente</div>
 
                     <div id="cartContent">
-                        <p>
-                            Seleccione un producto para agregar al carrito.
-                        </p>
+                        <p>Seleccione un producto para agregar al carrito.</p>
+                    </div>
+
+                    <div id="cartFooter" style="display:none; margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 700; margin-bottom: 15px;">
+                            <span>Total:</span>
+                            <span id="cartTotal">Bs 0,00</span>
+                        </div>
+                        <button type="button" class="btn-primary" id="generateInvoiceBtn" style="width:100%; padding: 12px; border-radius: 10px; font-weight: 700;">
+                            Generar Factura
+                        </button>
                     </div>
 
                 </div>
@@ -270,6 +288,10 @@
                         Revisa y descarga las facturas de ventas más recientes.
                     </p>
                 </div>
+
+                <button type="button" class="btn-primary" id="generateReportBtn" style="padding: 10px 20px; border-radius: 10px; font-weight: 700;">
+                    Generar Reporte
+                </button>
 
             </div>
 
@@ -757,10 +779,16 @@
 
                 <label>Categoría</label>
 
-                <input type="text"
-                       id="productCategory"
-                       placeholder="Ej: Franelas"
-                       required>
+                <select id="productCategory" required style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);">
+                    <option value="">Seleccionar...</option>
+                    <option value="camisas">Camisas</option>
+                    <option value="tazas">Tazas</option>
+                    <option value="gorras">Gorras</option>
+                    <option value="llaveros">Llaveros</option>
+                    <option value="termos/filtros">Termos / Filtros</option>
+                    <option value="mousepads">Mousepads</option>
+                    <option value="bolígrafos">Bolígrafos</option>
+                </select>
 
             </div>
 
@@ -804,7 +832,7 @@
                 <label>Imagen del Producto</label>
 
                 <input type="file"
-                       id="productImage"
+                       id="productImagen"
                        accept="image/*">
 
             </div>
@@ -942,12 +970,15 @@
         <div class="form-group">
             <label>Categoría</label>
 
-            <select id="editCategoria">
+            <select id="editCategoria" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);">
 
-                <option>Franelas</option>
-                <option>Pantalones</option>
-                <option>Zapatos</option>
-                <option>Accesorios</option>
+                <option value="camisas">Camisas</option>
+                <option value="tazas">Tazas</option>
+                <option value="gorras">Gorras</option>
+                <option value="llaveros">Llaveros</option>
+                <option value="termos/filtros">Termos / Filtros</option>
+                <option value="mousepads">Mousepads</option>
+                <option value="bolígrafos">Bolígrafos</option>
 
             </select>
         </div>
@@ -969,12 +1000,12 @@
         </div>
 
         <div class="form-group">
-            <label>URL de Imagen</label>
-
+            <label>Imagen del Producto</label>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;" id="editImagenActual"></div>
             <input
-                type="text"
+                type="file"
                 id="editImagen"
-                placeholder="https://...">
+                accept="image/*">
         </div>
 
         <div class="form-group">
@@ -1076,21 +1107,19 @@
                 </h3>
             </div>
 
-            <div class="invoice-footer">
-
-                <p>Gracias por su compra</p>
-
-                <p>Sublime Store - Sistema de Ventas</p>
-
-            </div>
-
         </div>
 
         <div class="invoice-actions">
 
             <button id="downloadInvoiceBtn">
 
-                Descargar / Imprimir
+                Descargar
+
+            </button>
+
+            <button id="printInvoiceBtn">
+
+                Imprimir
 
             </button>
 
@@ -1100,6 +1129,43 @@
 
             </button>
 
+        </div>
+
+    </div>
+
+</div>
+
+<div id="reportModal" class="client-modal">
+
+    <div class="client-modal-content" style="max-width: 500px;">
+
+        <h2>Generar Reporte</h2>
+
+        <label>Tipo de Reporte</label>
+        <select id="reportType" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);margin-bottom:15px;">
+            <option value="daily">Diario</option>
+            <option value="weekly">Semanal</option>
+            <option value="monthly">Mensual</option>
+            <option value="annual">Anual</option>
+            <option value="custom">Personalizado</option>
+        </select>
+
+        <div id="reportDateRange" style="display:none;">
+            <label>Desde</label>
+            <input type="date" id="reportDateFrom" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);margin-bottom:10px;">
+            <label>Hasta</label>
+            <input type="date" id="reportDateTo" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);margin-bottom:15px;">
+        </div>
+
+        <label>Formato de Exportación</label>
+        <select id="reportFormat" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--card-bg);color:var(--text-color);margin-bottom:20px;">
+            <option value="pdf">PDF (vista para imprimir)</option>
+            <option value="excel">Excel (CSV)</option>
+        </select>
+
+        <div class="client-modal-actions">
+            <button id="generateReportAction">Generar</button>
+            <button id="cancelReportBtn">Cancelar</button>
         </div>
 
     </div>

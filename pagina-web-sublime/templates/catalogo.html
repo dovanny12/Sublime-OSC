@@ -60,7 +60,8 @@
                         data-product-id="{{ p.id }}"
                         data-product-name="{{ p.name }}"
                         data-product-price="{{ format_price(p.price) }}"
-                        data-product-image="{{ url_for('static', filename='images/' + p.image_url) }}">
+                        data-product-image="{{ url_for('static', filename='images/' + p.image_url) }}"
+                        data-product-category="{{ p.category }}">
                     Añadir
                 </button>
             </div>

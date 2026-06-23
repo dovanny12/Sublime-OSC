@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><title>Cerrando...</title></head>
+<body style="display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#0a0a0f;color:#fff;font-family:sans-serif;">
+    <div style="text-align:center;">
+        <p>Inicio de sesión exitoso. Cerrando ventana...</p>
+        <div style="margin-top:20px;width:40px;height:40px;border:3px solid rgba(0,255,128,0.3);border-top-color:#00ff80;border-radius:50%;animation:spin .8s linear infinite;margin-inline:auto;"></div>
+    </div>
+    <style>
+        @keyframes spin{to{transform:rotate(360deg)}}
+    </style>
+    <script>
+        if (window.opener) {
+            window.opener.location.href = '/';
+            window.close();
+        } else {
+            setTimeout(function(){ window.location.href = '/'; }, 2000);
+        }
+    </script>
+</body>
+</html>

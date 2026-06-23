@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let baseUnitPrice = 0;
 
         function showProductState(product) {
-            const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+            const showSize = product.category === 'camisas';
             
             // Extract numeric USD price from formatted string like "$15.00 / 600,00 Bs"
             const priceMatch = product.price.match(/\$?([\d,]+\.?\d*)/);
@@ -213,12 +213,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="cart-modal-options">
+                    ${showSize ? `
                     <div class="cart-modal-option-group">
                         <label>Selecciona tu talla</label>
                         <div class="size-chips" id="sizeChips">
-                            ${sizes.map(s => `<button type="button" class="size-chip${s === 'M' ? ' selected' : ''}" data-size="${s}">${s}</button>`).join('')}
+                            ${['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(s => `<button type="button" class="size-chip${s === 'M' ? ' selected' : ''}" data-size="${s}">${s}</button>`).join('')}
                         </div>
                     </div>
+                    ` : ''}
                     <div class="cart-modal-option-group">
                         <label>Cantidad</label>
                         <div class="qty-control">
@@ -283,7 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: currentProductId,
                     name: addToCartBtn.dataset.productName,
                     price: addToCartBtn.dataset.productPrice,
-                    image: addToCartBtn.dataset.productImage
+                    image: addToCartBtn.dataset.productImage,
+                    category: addToCartBtn.dataset.productCategory || ''
                 };
 
                 showProductState(product);
@@ -344,8 +347,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modalContinue.addEventListener('click', async () => {
             if (!currentProductId) return;
             
-            const selectedChip = document.querySelector('.size-chip.selected');
-            const size = selectedChip ? selectedChip.dataset.size : 'M';
+            const hasSizeChips = document.querySelector('.size-chips');
+            const size = hasSizeChips ? (document.querySelector('.size-chip.selected')?.dataset.size || 'M') : '';
             const qtyInput = document.getElementById('qtyValue');
             const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
             
@@ -380,8 +383,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (viewCartLink && currentProductId) {
                 e.preventDefault();
                 
-                const selectedChip = document.querySelector('.size-chip.selected');
-                const size = selectedChip ? selectedChip.dataset.size : 'M';
+                const hasSizeChips = document.querySelector('.size-chips');
+                const size = hasSizeChips ? (document.querySelector('.size-chip.selected')?.dataset.size || 'M') : '';
                 const qtyInput = document.getElementById('qtyValue');
                 const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
                 

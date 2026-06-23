@@ -17,20 +17,27 @@
 
 <div class="studio-layout">
     <!-- LEFT: 3D Preview -->
-    <div class="sticky-preview">
-        <h3 class="preview-header">ESTUDIO DE DISEÑO</h3>
-        <div class="mockup-container" id="mockupContainer">
-            <div id="threejs-canvas"></div>
-            <canvas id="textureCanvas" width="1024" height="1024"></canvas>
-            <div class="preview-tip">Gira el producto con el ratón o pellizca para hacer zoom.</div>
-            <div id="previewError" class="preview-error">
-                <div class="preview-error-inner">
-                    <div id="previewErrorMsg">Error cargando vista previa 3D.</div>
-                    <button id="previewRetryBtn" class="btn-primary" type="button">Reintentar</button>
+        <div class="sticky-preview">
+            <h3 class="preview-header">ESTUDIO DE DISEÑO</h3>
+            <div class="mockup-container" id="mockupContainer">
+                <div id="threejs-canvas"></div>
+                <canvas id="textureCanvas" width="1024" height="1024"></canvas>
+                <div class="preview-tip">Gira el producto con el ratón o pellizca para hacer zoom.</div>
+                <div class="texture-overlay" id="textureOverlay">
+                    <div class="texture-overlay-header">
+                        <span>ARRASTRA PARA MOVER / GIRAR</span>
+                        <span class="overlay-hint">cuerpo = mueve · círculo = gira</span>
+                    </div>
+                    <canvas id="texturePreview" width="512" height="512"></canvas>
+                </div>
+                <div id="previewError" class="preview-error">
+                    <div class="preview-error-inner">
+                        <div id="previewErrorMsg">Error cargando vista previa 3D.</div>
+                        <button id="previewRetryBtn" class="btn-primary" type="button">Reintentar</button>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="summary-card" aria-live="polite">
+            <div class="summary-card" aria-live="polite">
             <h4>TU SELECCIÓN</h4>
             <div class="summary-preview">
                 <div><strong>Producto:</strong> <span id="summaryProduct">Franela</span></div>
@@ -214,12 +221,33 @@
                         </div>
                         <!-- Position hint -->
                         <div class="form-group" style="margin-top:18px;">
-                            <label class="field-label" for="placement">POSICIÓN EN EL PRODUCTO</label>
+                            <label class="field-label" for="placement">PLANTILLA DE POSICIÓN</label>
                             <select class="select-field" name="placement" id="placement" onchange="updatePreview()">
                                 <option value="Centro Frontal">Centro Frontal</option>
                                 <option value="Pecho">Pecho Izq.</option>
                                 <option value="Espalda">Espalda</option>
                             </select>
+                        </div>
+                        <!-- Image position -->
+                        <div class="form-group" id="imagePositionGroup" style="display:none;">
+                            <label class="field-label">POSICIÓN DE LA IMAGEN <span class="pos-hint">(arrastra / gira)</span></label>
+                            <div class="position-sliders">
+                                <div class="pos-row">
+                                    <span class="pos-label">X</span>
+                                    <input type="range" min="0" max="1" step="0.01" value="0.5" class="custom-range pos-range" id="imgPosX" oninput="updatePreview()">
+                                    <span class="pos-value" id="imgPosXVal">0.50</span>
+                                </div>
+                                <div class="pos-row">
+                                    <span class="pos-label">Y</span>
+                                    <input type="range" min="0" max="1" step="0.01" value="0.65" class="custom-range pos-range" id="imgPosY" oninput="updatePreview()">
+                                    <span class="pos-value" id="imgPosYVal">0.65</span>
+                                </div>
+                                <div class="pos-row">
+                                    <span class="pos-label">Giro</span>
+                                    <input type="range" min="-180" max="180" step="1" value="0" class="custom-range pos-range" id="imgRotate" oninput="updatePreview()">
+                                    <span class="pos-value" id="imgRotateVal">0°</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -282,6 +310,27 @@
                                     </div>
                                 </div>
                                 <span id="textColorName" class="field-note">#000000</span>
+                            </div>
+                        </div>
+                        <!-- Text position -->
+                        <div class="form-group">
+                            <label class="field-label">POSICIÓN DEL TEXTO <span class="pos-hint">(arrastra / gira)</span></label>
+                            <div class="position-sliders">
+                                <div class="pos-row">
+                                    <span class="pos-label">X</span>
+                                    <input type="range" min="0" max="1" step="0.01" value="0.5" class="custom-range pos-range" id="textPosX" oninput="updatePreview()">
+                                    <span class="pos-value" id="textPosXVal">0.50</span>
+                                </div>
+                                <div class="pos-row">
+                                    <span class="pos-label">Y</span>
+                                    <input type="range" min="0" max="1" step="0.01" value="0.35" class="custom-range pos-range" id="textPosY" oninput="updatePreview()">
+                                    <span class="pos-value" id="textPosYVal">0.35</span>
+                                </div>
+                                <div class="pos-row">
+                                    <span class="pos-label">Giro</span>
+                                    <input type="range" min="-180" max="180" step="1" value="0" class="custom-range pos-range" id="textRotate" oninput="updatePreview()">
+                                    <span class="pos-value" id="textRotateVal">0°</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -458,14 +507,13 @@ const fallbackGeometries = {
 let modelGroup = null;
 
 // Material: generar una textura de bump (tela) y un envMap simple para acabado elegante
-function generateCylindricalUVs(geometry) {
+function generateCylindricalUVs(geometry, vFlip) {
     const positionAttribute = geometry.attributes.position;
     if (!positionAttribute) return;
     
     const count = positionAttribute.count;
     const uvs = new Float32Array(count * 2);
     
-    // Find min and max Y to normalize V coordinate
     let minY = Infinity;
     let maxY = -Infinity;
     for (let i = 0; i < count; i++) {
@@ -480,10 +528,9 @@ function generateCylindricalUVs(geometry) {
         const y = positionAttribute.getY(i);
         const z = positionAttribute.getZ(i);
         
-        // U: angle around Y axis normalized to [0, 1]
         const u = (Math.atan2(x, z) + Math.PI) / (2 * Math.PI);
-        // V: height normalized to [0, 1]
-        const v = (y - minY) / height;
+        let v = (y - minY) / height;
+        if (vFlip) v = 1 - v;
         
         uvs[i * 2] = u;
         uvs[i * 2 + 1] = v;
@@ -822,22 +869,56 @@ async function update3DModel() {
                     child.castShadow = true;
                     child.receiveShadow = true;
                     
+                    const cfg = productConfig[type];
                     const hadUVs = child.geometry?.attributes?.uv && child.geometry.attributes.uv.count > 0;
                     if (!hadUVs) {
                         try {
-                            generateCylindricalUVs(child.geometry);
+                            generateCylindricalUVs(child.geometry, cfg && cfg.flipUV_Y);
                         } catch (e) {
                             console.warn('Failed to generate UVs for', child.name, e);
                         }
+                    } else if (cfg) {
+                        // Apply per-product UV corrections to existing UVs
+                        const uvAttr = child.geometry.attributes.uv;
+                        const uvArray = uvAttr.array;
+                        let uvModified = false;
+                        if (cfg.flipUV_X) {
+                            for (let i = 0; i < uvArray.length; i += 2) {
+                                uvArray[i] = 1 - uvArray[i];
+                            }
+                            uvModified = true;
+                        }
+                        if (cfg.flipUV_Y) {
+                            for (let i = 1; i < uvArray.length; i += 2) {
+                                uvArray[i] = 1 - uvArray[i];
+                            }
+                            uvModified = true;
+                        }
+                        if (cfg.uOffset) {
+                            for (let i = 0; i < uvArray.length; i += 2) {
+                                uvArray[i] = (uvArray[i] + cfg.uOffset) % 1;
+                            }
+                            uvModified = true;
+                        }
+                        if (cfg.uRotate) {
+                            const angle = cfg.uRotate * Math.PI / 180;
+                            const cos = Math.cos(angle);
+                            const sin = Math.sin(angle);
+                            for (let i = 0; i < uvArray.length; i += 2) {
+                                const u = uvArray[i] - 0.5;
+                                const v = uvArray[i + 1] - 0.5;
+                                uvArray[i] = u * cos - v * sin + 0.5;
+                                uvArray[i + 1] = u * sin + v * cos + 0.5;
+                            }
+                            uvModified = true;
+                        }
+                        if (uvModified) uvAttr.needsUpdate = true;
                     }
                     
                     const childName = (child.name || '').toLowerCase();
                     const parentName = (child.parent && child.parent.name || '').toLowerCase();
                     const isBrim = childName.includes('brim') || parentName.includes('brim') || childName.includes('visor') || parentName.includes('visor');
                     
-                    // For the shirt, only Mesh 0 (Cube.001) has the front panel with original UVs,
-                    // and Vert has no original UVs. We only want the panel (hadUVs) to receive mainMaterial,
-                    // and the shirt body (which now has generated UVs) to receive subMaterial (with fabric texture).
                     const isFranela = (type === 'franela');
                     const shouldGetMainMaterial = isFranela ? hadUVs : (child.geometry?.attributes?.uv && child.geometry.attributes.uv.count > 0 && !isBrim);
                     
@@ -1028,31 +1109,137 @@ function updateMaterialProperties() {
 
 let uploadedImage = null;
 
+const productConfig = {
+    'franela': {
+        textX: 0.5, textY: 0.30, textScale: 0.90,
+        imgX: 0.5, imgY: 0.65, imgScale: 0.60,
+        flipUV_X: true, flipUV_Y: false, uOffset: 0, uRotate: 0,
+        chestX: 0.30, chestY: 0.25, chestScale: 0.55,
+        backX: 0.5, backY: 0.62, backScale: 0.75
+    },
+    'short': {
+        textX: 0.5, textY: 0.30, textScale: 0.75,
+        imgX: 0.5, imgY: 0.62, imgScale: 0.50,
+        flipUV_X: false, flipUV_Y: false, uOffset: 0, uRotate: 0,
+        chestX: 0.30, chestY: 0.25, chestScale: 0.55,
+        backX: 0.5, backY: 0.60, backScale: 0.70
+    },
+    'taza': {
+        textX: 0.5, textY: 0.28, textScale: 0.60,
+        imgX: 0.5, imgY: 0.65, imgScale: 0.40,
+        flipUV_X: false, flipUV_Y: true, uOffset: 0, uRotate: 0,
+        chestX: 0.5, chestY: 0.28, chestScale: 0.50,
+        backX: 0.5, backY: 0.62, backScale: 0.80
+    },
+    'filtro': {
+        textX: 0.5, textY: 0.28, textScale: 0.60,
+        imgX: 0.5, imgY: 0.65, imgScale: 0.40,
+        flipUV_X: false, flipUV_Y: true, uOffset: 0, uRotate: 0,
+        chestX: 0.5, chestY: 0.28, chestScale: 0.50,
+        backX: 0.5, backY: 0.62, backScale: 0.80
+    },
+    'gorra': {
+        textX: 0.5, textY: 0.22, textScale: 0.55,
+        imgX: 0.5, imgY: 0.55, imgScale: 0.35,
+        flipUV_X: true, flipUV_Y: false, uOffset: 0, uRotate: 0,
+        chestX: 0.5, chestY: 0.22, chestScale: 0.55,
+        backX: 0.5, backY: 0.62, backScale: 0.80
+    },
+    'llavero': {
+        textX: 0.5, textY: 0.28, textScale: 0.45,
+        imgX: 0.5, imgY: 0.62, imgScale: 0.35,
+        flipUV_X: true, flipUV_Y: false, uOffset: 0, uRotate: 0,
+        chestX: 0.5, chestY: 0.30, chestScale: 0.45,
+        backX: 0.5, backY: 0.62, backScale: 0.80
+    },
+    'pen': {
+        textX: 0.5, textY: 0.28, textScale: 0.40,
+        imgX: 0.5, imgY: 0.62, imgScale: 0.30,
+        flipUV_X: true, flipUV_Y: false, uOffset: 0, uRotate: 0,
+        chestX: 0.5, chestY: 0.28, chestScale: 0.40,
+        backX: 0.5, backY: 0.62, backScale: 0.80
+    },
+    'mousepad': {
+        textX: 0.5, textY: 0.32, textScale: 0.85,
+        imgX: 0.5, imgY: 0.65, imgScale: 0.55,
+        flipUV_X: false, flipUV_Y: false, uOffset: 0, uRotate: 0,
+        chestX: 0.34, chestY: 0.28, chestScale: 0.55,
+        backX: 0.5, backY: 0.62, backScale: 0.80
+    }
+};
+
 function updateCanvasTexture() {
     const baseColor = document.getElementById('product_color_picker').value;
     const text = document.getElementById('custom_text').value || "Tu Mensaje";
     const textColor = document.getElementById('text_color_picker').value;
-    const font = document.getElementById('font_style').value.split(',')[0].replace(/'/g, ''); 
-    const textSize = parseFloat(document.getElementById('textSizeSlider').value) * 60; 
+    const font = document.getElementById('font_style').value.split(',')[0].replace(/'/g, '');
+    const textSize = parseFloat(document.getElementById('textSizeSlider').value) * 60;
     const placement = document.getElementById('placement').value;
     const productType = document.getElementById('product_type').value;
+    const cfg = productConfig[productType] || productConfig['franela'];
 
-    const frontPositions = {
-        'franela': { x: 0.5, y: 0.5, scale: 1.0 },
-        'short': { x: 0.5, y: 0.52, scale: 0.9 },
-        'taza': { x: 0.5, y: 0.58, scale: 0.8 },
-        'filtro': { x: 0.5, y: 0.55, scale: 0.8 },
-        'gorra': { x: 0.5, y: 0.45, scale: 0.9 },
-        'llavero': { x: 0.5, y: 0.5, scale: 0.7 },
-        'pen': { x: 0.5, y: 0.5, scale: 0.65 },
-        'mousepad': { x: 0.5, y: 0.5, scale: 1.0 }
-    };
-    const defaultFront = frontPositions[productType] || { x: 0.5, y: 0.5, scale: 1.0 };
+    // Read positions from sliders (user-controlled)
+    const textPosXEl = document.getElementById('textPosX');
+    const textPosYEl = document.getElementById('textPosY');
+    const imgPosXEl = document.getElementById('imgPosX');
+    const imgPosYEl = document.getElementById('imgPosY');
+    const textRotateEl = document.getElementById('textRotate');
+    const imgRotateEl = document.getElementById('imgRotate');
+    let textNormX = parseFloat(textPosXEl ? textPosXEl.value : cfg.textX);
+    let textNormY = parseFloat(textPosYEl ? textPosYEl.value : cfg.textY);
+    let imgNormX = parseFloat(imgPosXEl ? imgPosXEl.value : cfg.imgX);
+    let imgNormY = parseFloat(imgPosYEl ? imgPosYEl.value : cfg.imgY);
+    const textRotate = parseFloat(textRotateEl ? textRotateEl.value : 0);
+    const imgRotate = parseFloat(imgRotateEl ? imgRotateEl.value : 0);
+    let textScale = cfg.textScale;
+    let imgScale = cfg.imgScale;
+
+    if (placement === 'Pecho') {
+        textNormX = cfg.chestX;
+        textNormY = cfg.chestY;
+        if (textPosXEl) textPosXEl.value = textNormX;
+        if (textPosYEl) textPosYEl.value = textNormY;
+        textScale = cfg.chestScale;
+        imgNormY = cfg.chestY + 0.28;
+        if (imgPosYEl) imgPosYEl.value = imgNormY;
+        imgScale = cfg.imgScale * 0.80;
+    } else if (placement === 'Espalda') {
+        textNormX = cfg.backX;
+        textNormY = cfg.backY;
+        if (textPosXEl) textPosXEl.value = textNormX;
+        if (textPosYEl) textPosYEl.value = textNormY;
+        textScale = cfg.backScale;
+        imgNormY = cfg.backY + 0.20;
+        if (imgPosYEl) imgPosYEl.value = imgNormY;
+        imgScale = cfg.imgScale * 0.85;
+    }
+
+    // Update slider display values
+    const tpx = document.getElementById('textPosXVal');
+    const tpy = document.getElementById('textPosYVal');
+    const ipx = document.getElementById('imgPosXVal');
+    const ipy = document.getElementById('imgPosYVal');
+    const trv = document.getElementById('textRotateVal');
+    const irv = document.getElementById('imgRotateVal');
+    if (tpx) tpx.textContent = textNormX.toFixed(2);
+    if (tpy) tpy.textContent = textNormY.toFixed(2);
+    if (ipx) ipx.textContent = imgNormX.toFixed(2);
+    if (ipy) ipy.textContent = imgNormY.toFixed(2);
+    if (trv) trv.textContent = textRotate + '°';
+    if (irv) irv.textContent = imgRotate + '°';
+
+    // Convert to pixel coordinates
+    let textX = texCanvas.width * textNormX;
+    let textY = texCanvas.height * textNormY;
+    let currentTextSize = textSize * textScale;
+    let imgX = texCanvas.width * imgNormX;
+    let imgY = texCanvas.height * imgNormY;
+    let currentImgScale = imgScale;
 
     // Background
     texCtx.fillStyle = baseColor;
     texCtx.fillRect(0, 0, texCanvas.width, texCanvas.height);
-    // Subtle fabric/noise overlay to make preview more realistic
+    // Subtle fabric/noise overlay
     const noiseAlpha = 0.06;
     texCtx.fillStyle = `rgba(255,255,255,${noiseAlpha})`;
     for (let i = 0; i < 1200; i++) {
@@ -1064,44 +1251,27 @@ function updateCanvasTexture() {
     }
     texCtx.globalAlpha = 1.0;
     
-    // Position
-    let x = texCanvas.width * defaultFront.x;
-    let y = texCanvas.height * defaultFront.y;
-    let currentTextSize = textSize * defaultFront.scale;
-    
-    if (placement === 'Pecho') {
-        x = texCanvas.width * 0.34;
-        y = texCanvas.height * 0.42;
-        currentTextSize = textSize * 0.65;
-        if (productType === 'taza' || productType === 'filtro') {
-            x = texCanvas.width * 0.5;
-            y = texCanvas.height * 0.45;
-            currentTextSize = textSize * 0.5;
-        }
-        if (productType === 'gorra') {
-            x = texCanvas.width * 0.5;
-            y = texCanvas.height * 0.35;
-            currentTextSize = textSize * 0.75;
-        }
-    } else if (placement === 'Espalda') {
-        x = texCanvas.width * 0.5;
-        y = texCanvas.height * 0.62;
-        currentTextSize = textSize * 0.8;
-    }
-    
-    // Draw Text
+    // Draw Text (with rotation)
+    texCtx.save();
+    texCtx.translate(textX, textY);
+    texCtx.rotate(textRotate * Math.PI / 180);
     texCtx.fillStyle = textColor;
     texCtx.font = `bold ${currentTextSize}px ${font}, sans-serif`;
     texCtx.textAlign = 'center';
     texCtx.textBaseline = 'middle';
-    texCtx.fillText(text, x, y);
+    texCtx.fillText(text, 0, 0);
+    texCtx.restore();
     
-    // Draw Image if uploaded
+    // Draw Image if uploaded (with rotation)
     if (uploadedImage) {
-        const maxWidth = texCanvas.width * 0.6 * defaultFront.scale;
-        const imgWidth = Math.min(maxWidth, 400);
+        const maxWidth = texCanvas.width * 0.50 * currentImgScale;
+        const imgWidth = Math.min(maxWidth, 300);
         const imgHeight = imgWidth * (uploadedImage.height / uploadedImage.width);
-        texCtx.drawImage(uploadedImage, x - imgWidth / 2, y + currentTextSize * 0.6, imgWidth, imgHeight);
+        texCtx.save();
+        texCtx.translate(imgX, imgY);
+        texCtx.rotate(imgRotate * Math.PI / 180);
+        texCtx.drawImage(uploadedImage, -imgWidth / 2, -imgHeight / 2, imgWidth, imgHeight);
+        texCtx.restore();
     }
     
     // If short, draw central seam and hem lines on the texture to emulate stitched details
@@ -1156,7 +1326,227 @@ function updateCanvasTexture() {
     // También actualizar el total en el botón o resumen si existiera
     const totalSpan = document.querySelector('.summary-card [id="priceTotal"]');
     if (totalSpan) totalSpan.innerText = jsFormatPrice(total);
+
+    // Copy to preview canvas for drag interaction
+    const previewCanvas = document.getElementById('texturePreview');
+    if (previewCanvas) {
+        const pCtx = previewCanvas.getContext('2d');
+        pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        pCtx.drawImage(texCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
+        // Read current rotation values
+        const textRotEl = document.getElementById('textRotate');
+        const imgRotEl = document.getElementById('imgRotate');
+        const textRotDeg = parseFloat(textRotEl ? textRotEl.value : 0);
+        const imgRotDeg = parseFloat(imgRotEl ? imgRotEl.value : 0);
+        const handleLen = previewCanvas.width * 0.05;
+        // Draw crosshair and rotation handle at text position
+        const ptx = textNormX * previewCanvas.width;
+        const pty = textNormY * previewCanvas.height;
+        // Rotation handle line + circle
+        const trRad = textRotDeg * Math.PI / 180;
+        const hx = ptx + Math.sin(trRad) * handleLen;
+        const hy = pty - Math.cos(trRad) * handleLen;
+        pCtx.strokeStyle = 'rgba(0,255,100,0.9)';
+        pCtx.lineWidth = 2.5;
+        pCtx.beginPath();
+        pCtx.moveTo(ptx, pty);
+        pCtx.lineTo(hx, hy);
+        pCtx.stroke();
+        pCtx.fillStyle = 'rgba(0,255,100,0.9)';
+        pCtx.beginPath();
+        pCtx.arc(hx, hy, 6, 0, Math.PI * 2);
+        pCtx.fill();
+        // Position crosshair
+        pCtx.strokeStyle = 'rgba(0,255,100,0.5)';
+        pCtx.lineWidth = 1.5;
+        pCtx.beginPath();
+        pCtx.arc(ptx, pty, 8, 0, Math.PI * 2);
+        pCtx.stroke();
+        pCtx.beginPath();
+        pCtx.moveTo(ptx - 12, pty); pCtx.lineTo(ptx + 12, pty);
+        pCtx.moveTo(ptx, pty - 12); pCtx.lineTo(ptx, pty + 12);
+        pCtx.stroke();
+        // Draw image hit area and rotation handle if present
+        if (uploadedImage) {
+            const piw = Math.min(previewCanvas.width * 0.50 * imgScale, 150);
+            const pih = piw * (uploadedImage.height / uploadedImage.width);
+            const pix = imgNormX * previewCanvas.width;
+            const piy = imgNormY * previewCanvas.height;
+            // Image rotation handle
+            const irRad = imgRotDeg * Math.PI / 180;
+            const ihx = pix + Math.sin(irRad) * handleLen;
+            const ihy = piy - Math.cos(irRad) * handleLen;
+            pCtx.strokeStyle = 'rgba(255,200,0,0.9)';
+            pCtx.lineWidth = 2.5;
+            pCtx.beginPath();
+            pCtx.moveTo(pix, piy);
+            pCtx.lineTo(ihx, ihy);
+            pCtx.stroke();
+            pCtx.fillStyle = 'rgba(255,200,0,0.9)';
+            pCtx.beginPath();
+            pCtx.arc(ihx, ihy, 6, 0, Math.PI * 2);
+            pCtx.fill();
+            // Image hit box
+            pCtx.strokeStyle = 'rgba(255,200,0,0.5)';
+            pCtx.lineWidth = 1.5;
+            pCtx.setLineDash([5,4]);
+            pCtx.strokeRect(pix - piw/2, piy - pih/2, piw, pih);
+            pCtx.setLineDash([]);
+        }
+    }
 }
+
+// ── Drag on texture preview (move + rotate) ──
+(function() {
+    const previewCanvas = document.getElementById('texturePreview');
+    if (!previewCanvas) return;
+    let dragTarget = null; // 'text' or 'image'
+    let dragMode = 'move'; // 'move' or 'rotate'
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    const handleLen = previewCanvas.width * 0.05;
+
+    function getPosFromEvent(e) {
+        const rect = previewCanvas.getBoundingClientRect();
+        const scaleX = previewCanvas.width / rect.width;
+        const scaleY = previewCanvas.height / rect.height;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
+        };
+    }
+
+    function getHandlePos(cx, cy, rotDeg) {
+        const rad = rotDeg * Math.PI / 180;
+        return {
+            x: cx + Math.sin(rad) * handleLen,
+            y: cy - Math.cos(rad) * handleLen
+        };
+    }
+
+    function startDrag(e) {
+        const pos = getPosFromEvent(e);
+        const productType = document.getElementById('product_type').value;
+        const cfg = productConfig[productType] || productConfig['franela'];
+        const textXEl = document.getElementById('textPosX');
+        const textYEl = document.getElementById('textPosY');
+        const textRotEl = document.getElementById('textRotate');
+        const imgXEl = document.getElementById('imgPosX');
+        const imgYEl = document.getElementById('imgPosY');
+        const imgRotEl = document.getElementById('imgRotate');
+        const placement = document.getElementById('placement').value;
+        if (placement === 'Pecho' || placement === 'Espalda') return;
+
+        const tx = parseFloat(textXEl ? textXEl.value : cfg.textX) * previewCanvas.width;
+        const ty = parseFloat(textYEl ? textYEl.value : cfg.textY) * previewCanvas.height;
+        const tRot = parseFloat(textRotEl ? textRotEl.value : 0);
+        // Check text rotation handle hit first
+        const thp = getHandlePos(tx, ty, tRot);
+        if (Math.hypot(pos.x - thp.x, pos.y - thp.y) < 14) {
+            dragTarget = 'text';
+            dragMode = 'rotate';
+            previewCanvas.classList.add('dragging-text');
+            e.preventDefault();
+            return;
+        }
+        // Check text body hit
+        if (Math.hypot(pos.x - tx, pos.y - ty) < 20) {
+            dragTarget = 'text';
+            dragMode = 'move';
+            dragOffsetX = pos.x - tx;
+            dragOffsetY = pos.y - ty;
+            previewCanvas.classList.add('dragging-text');
+            e.preventDefault();
+            return;
+        }
+        // Check image handle / body
+        if (uploadedImage && imgXEl && imgYEl) {
+            const ix = parseFloat(imgXEl.value) * previewCanvas.width;
+            const iy = parseFloat(imgYEl.value) * previewCanvas.height;
+            const iRot = parseFloat(imgRotEl ? imgRotEl.value : 0);
+            const ihp = getHandlePos(ix, iy, iRot);
+            if (Math.hypot(pos.x - ihp.x, pos.y - ihp.y) < 14) {
+                dragTarget = 'image';
+                dragMode = 'rotate';
+                previewCanvas.classList.add('dragging-image');
+                e.preventDefault();
+                return;
+            }
+            if (Math.hypot(pos.x - ix, pos.y - iy) < 20) {
+                dragTarget = 'image';
+                dragMode = 'move';
+                dragOffsetX = pos.x - ix;
+                dragOffsetY = pos.y - iy;
+                previewCanvas.classList.add('dragging-image');
+                e.preventDefault();
+            }
+        }
+        if (dragTarget) {
+            const ov = document.getElementById('textureOverlay');
+            if (ov) ov.classList.add('dragging-active');
+        }
+    }
+
+    function moveDrag(e) {
+        if (!dragTarget) return;
+        const pos = getPosFromEvent(e);
+        if (dragMode === 'move') {
+            const normX = Math.max(0, Math.min(1, (pos.x - dragOffsetX) / previewCanvas.width));
+            const normY = Math.max(0, Math.min(1, (pos.y - dragOffsetY) / previewCanvas.height));
+            if (dragTarget === 'text') {
+                const elX = document.getElementById('textPosX');
+                const elY = document.getElementById('textPosY');
+                if (elX) elX.value = normX;
+                if (elY) elY.value = normY;
+            } else if (dragTarget === 'image') {
+                const elX = document.getElementById('imgPosX');
+                const elY = document.getElementById('imgPosY');
+                if (elX) elX.value = normX;
+                if (elY) elY.value = normY;
+            }
+        } else {
+            // rotate mode
+            let cx, cy;
+            if (dragTarget === 'text') {
+                const elX = document.getElementById('textPosX');
+                const elY = document.getElementById('textPosY');
+                cx = parseFloat(elX ? elX.value : 0.5) * previewCanvas.width;
+                cy = parseFloat(elY ? elY.value : 0.35) * previewCanvas.height;
+            } else {
+                const elX = document.getElementById('imgPosX');
+                const elY = document.getElementById('imgPosY');
+                cx = parseFloat(elX ? elX.value : 0.5) * previewCanvas.width;
+                cy = parseFloat(elY ? elY.value : 0.65) * previewCanvas.height;
+            }
+            const dx = pos.x - cx;
+            const dy = pos.y - cy;
+            let deg = Math.atan2(dx, -dy) * 180 / Math.PI;
+            deg = Math.round(Math.max(-180, Math.min(180, deg)));
+            const rotEl = document.getElementById(dragTarget === 'text' ? 'textRotate' : 'imgRotate');
+            if (rotEl) rotEl.value = deg;
+        }
+        updateCanvasTexture();
+        e.preventDefault();
+    }
+
+    function endDrag() {
+        if (!dragTarget) return;
+        dragTarget = null;
+        dragMode = 'move';
+        previewCanvas.classList.remove('dragging-text', 'dragging-image');
+        const ov = document.getElementById('textureOverlay');
+        if (ov) ov.classList.remove('dragging-active');
+    }
+
+    previewCanvas.addEventListener('mousedown', startDrag);
+    window.addEventListener('mousemove', moveDrag);
+    window.addEventListener('mouseup', endDrag);
+    previewCanvas.addEventListener('touchstart', startDrag, { passive: false });
+    window.addEventListener('touchmove', moveDrag, { passive: false });
+    window.addEventListener('touchend', endDrag);
+})();
 
 function handleImage(input) {
     if (input.files && input.files[0]) {
@@ -1167,7 +1557,6 @@ function handleImage(input) {
             img.onload = function() {
                 uploadedImage = img;
                 
-                // Mostrar vista previa local
                 const thumb = document.getElementById('imagePreviewThumb');
                 const nameSpan = document.getElementById('imagePreviewName');
                 const container = document.getElementById('imagePreviewContainer');
@@ -1176,6 +1565,9 @@ function handleImage(input) {
                     nameSpan.innerText = file.name;
                     container.style.display = 'block';
                 }
+                
+                const imgPosGroup = document.getElementById('imagePositionGroup');
+                if (imgPosGroup) imgPosGroup.style.display = 'block';
                 
                 updateCanvasTexture();
             }
@@ -1188,13 +1580,14 @@ function handleImage(input) {
 function removeUploadedImage() {
     uploadedImage = null;
     
-    // Limpiar input de archivo
     const input = document.getElementById('design_image');
     if (input) input.value = '';
     
-    // Ocultar vista previa local
     const container = document.getElementById('imagePreviewContainer');
     if (container) container.style.display = 'none';
+    
+    const imgPosGroup = document.getElementById('imagePositionGroup');
+    if (imgPosGroup) imgPosGroup.style.display = 'none';
     
     updateCanvasTexture();
 }
@@ -1293,6 +1686,16 @@ function updateProductFields() {
             setProductColor('#cccccc', null);
             if (materialSelect.options.length > 0) materialSelect.value = 'Poliéster Deportivo';
         }
+        // Reset position sliders to defaults for this product type
+        const nc = productConfig[productType] || productConfig['franela'];
+        const txEl = document.getElementById('textPosX');
+        const tyEl = document.getElementById('textPosY');
+        const ixEl = document.getElementById('imgPosX');
+        const iyEl = document.getElementById('imgPosY');
+        if (txEl) txEl.value = nc.textX;
+        if (tyEl) tyEl.value = nc.textY;
+        if (ixEl) ixEl.value = nc.imgX;
+        if (iyEl) iyEl.value = nc.imgY;
         window.lastProductType = productType;
     }
     

@@ -1,26 +1,86 @@
 import os
 import time
 import json
+import uuid
 import sqlite3
 import urllib.request
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_from_directory
 from models import db, User, Product, Order
 
-
 app = Flask(__name__)
-
 app.secret_key = 'super_secret_key_for_sublime'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads","products")
-os.makedirs( UPLOAD_FOLDER,exist_ok=True)
 SHARED_DB_PATH = os.path.abspath(os.path.join(BASE_DIR, '..', 'Sublime', 'BD', 'database.db'))
 SHARED_SQL_PATH = os.path.abspath(os.path.join(BASE_DIR, '..', 'Sublime', 'BD', 'database.sql'))
 ADMIN_PANEL_DIR = os.path.abspath(os.path.join(BASE_DIR, '..', 'Sublime', 'admin-panel'))
 
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{SHARED_DB_PATH}"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# OAuth Configuration (set these via environment variables or .env)
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID', '')
+FACEBOOK_APP_SECRET = os.environ.get('FACEBOOK_APP_SECRET', '')
+
+def get_base_url():
+    return os.environ.get('OAUTH_REDIRECT_BASE', 'http://localhost:5000')
+
+from urllib.parse import urlencode
+
+def google_oauth_url(state=''):
+    params = {
+        'client_id': GOOGLE_CLIENT_ID,
+        'redirect_uri': f'{get_base_url()}/auth/google/callback',
+        'response_type': 'code',
+        'scope': 'openid email profile',
+        'access_type': 'offline'
+    }
+    if state:
+        params['state'] = state
+    return f'https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}'
+
+def facebook_oauth_url(state=''):
+    params = {
+        'client_id': FACEBOOK_APP_ID,
+        'redirect_uri': f'{get_base_url()}/auth/facebook/callback',
+        'response_type': 'code',
+        'scope': 'email'
+    }
+    if state:
+        params['state'] = state
+    return f'https://www.facebook.com/v19.0/dialog/oauth?{urlencode(params)}'
+
+def exchange_google_code(code):
+    data = urlencode({
+        'code': code,
+        'client_id': GOOGLE_CLIENT_ID,
+        'client_secret': GOOGLE_CLIENT_SECRET,
+        'redirect_uri': f'{get_base_url()}/auth/google/callback',
+        'grant_type': 'authorization_code'
+    }).encode()
+    req = urllib.request.Request('https://oauth2.googleapis.com/token', data=data)
+    with urllib.request.urlopen(req) as resp:
+        token_data = json.loads(resp.read().decode())
+    access_token = token_data['access_token']
+    req2 = urllib.request.Request(
+        'https://www.googleapis.com/oauth2/v2/userinfo',
+        headers={'Authorization': f'Bearer {access_token}'}
+    )
+    with urllib.request.urlopen(req2) as resp2:
+        return json.loads(resp2.read().decode())
+
+def exchange_facebook_code(code):
+    params = urlencode({
+        'client_id': FACEBOOK_APP_ID,
+        'client_secret': FACEBOOK_APP_SECRET,
+        'redirect_uri': f'{get_base_url()}/auth/facebook/callback',
+        'code': code
+    })
+    req = urllib.request.Request(f'https://graph.facebook.com/v19.0/oauth/access_token?{params}')
+    with urllib.request.urlopen(req) as resp:
+        token_data = json.loads(resp.read().decode())
+    access_token = token_data['access_token']
+    req2 = urllib.request.Request(f'https://graph.facebook.com/me?fields=id,name,email&access_token={access_token}')
+    with urllib.request.urlopen(req2) as resp2:
+        return json.loads(resp2.read().decode())
 
 # Cache para la tasa BCV
 BCV_RATE_CACHE = {'rate': 40.0, 'updated': 0}
@@ -51,41 +111,15 @@ os.makedirs(os.path.dirname(SHARED_DB_PATH), exist_ok=True)
 
 
 def ensure_shared_db():
-
-    print('SHARED_DB_PATH:', SHARED_DB_PATH)
-    print('SHARED_SQL_PATH:', SHARED_SQL_PATH)
-
-    os.makedirs(
-        os.path.dirname(SHARED_DB_PATH),
-        exist_ok=True
-    )
-
-    # Si la base de datos ya existe, no volver a ejecutar database.sql
-    if os.path.exists(SHARED_DB_PATH):
-
-        conn = sqlite3.connect(SHARED_DB_PATH)
-        conn.execute('PRAGMA foreign_keys = ON')
-        conn.close()
-
-        return
-
+    # Crear la DB si no existe y siempre aplicar el schema SQL
     conn = sqlite3.connect(SHARED_DB_PATH)
     conn.execute('PRAGMA foreign_keys = ON')
-
     if os.path.exists(SHARED_SQL_PATH):
-
-        with open(
-            SHARED_SQL_PATH,
-            'r',
-            encoding='utf-8'
-        ) as f:
-
-            conn.executescript(
-                f.read()
-            )
-
+        with open(SHARED_SQL_PATH, 'r', encoding='utf-8') as f:
+            conn.executescript(f.read())
     conn.commit()
     conn.close()
+
 
 def get_shared_db():
     ensure_shared_db()
@@ -142,6 +176,24 @@ def seed_default_admin():
         conn.close()
 
 
+CATEGORIES = ['camisas', 'tazas', 'gorras', 'llaveros', 'termos/filtros', 'mousepads', 'bolígrafos']
+
+
+def validate_stock(conn, product_id, quantity=1):
+    if not product_id:
+        return True, None
+    row = conn.execute(
+        'SELECT IFNULL(stock_actual, 0) AS stock FROM inventario WHERE id_producto = ?',
+        (product_id,)
+    ).fetchone()
+    stock = row['stock'] if row else 0
+    if stock < quantity:
+        name_row = conn.execute('SELECT nombre FROM productos WHERE id_producto = ?', (product_id,)).fetchone()
+        name = name_row['nombre'] if name_row else 'Producto'
+        return False, f'"{name}" no tiene stock suficiente. Disponible: {stock}'
+    return True, None
+
+
 def placeholder():
     return '?'
 
@@ -153,10 +205,11 @@ def map_product_row(row):
         'category': row['categoria'] or 'General',
         'price': float(row['precio_venta']),
         'image_url': row['ruta_imagen'] or 'placeholder.png',
-        'description': row['descripcion'] or ''
+        'description': row['descripcion'] or '',
+        'stock': row['stock'] if 'stock' in row else 0
     }
- 
- 
+
+
 seed_default_admin()
 
 def fetch_products(categoria=None, search_query=None, sort_option='newest', limit=None):
@@ -170,16 +223,16 @@ def fetch_products(categoria=None, search_query=None, sort_option='newest', limi
         'WHERE p.activo = 1 AND p.id_categoria IS NOT NULL '
     )
     params = ['placeholder.png']
- 
+
     if categoria:
         sql += ' AND c.nombre = ? '
         params.append(categoria)
- 
+
     if search_query:
         sql += ' AND (p.nombre LIKE ? OR p.descripcion LIKE ?) '
         term = f'%{search_query}%'
         params.extend([term, term])
- 
+
     if sort_option == 'price_asc':
         sql += ' ORDER BY p.precio_venta ASC '
     elif sort_option == 'price_desc':
@@ -188,70 +241,38 @@ def fetch_products(categoria=None, search_query=None, sort_option='newest', limi
         sql += ' ORDER BY p.nombre ASC '
     else:
         sql += ' ORDER BY p.id_producto DESC '
- 
+
     if limit:
         sql += ' LIMIT ? '
         params.append(limit)
- 
+
     rows = conn.execute(sql, params).fetchall()
     conn.close()
     return [map_product_row(row) for row in rows]
- 
- 
+
+
 def fetch_product_by_id(product_id):
     conn = get_shared_db()
     row = conn.execute(
         'SELECT p.id_producto, p.nombre, p.descripcion, p.precio_venta, c.nombre AS categoria, '
-        'COALESCE((SELECT ruta_imagen FROM imagenes_productos ip WHERE ip.id_producto = p.id_producto ORDER BY ip.id_imagen LIMIT 1), ?) AS ruta_imagen '
+        'COALESCE((SELECT ruta_imagen FROM imagenes_productos ip WHERE ip.id_producto = p.id_producto ORDER BY ip.id_imagen LIMIT 1), ?) AS ruta_imagen, '
+        'IFNULL(i.stock_actual, 0) AS stock '
         'FROM productos p '
         'LEFT JOIN categorias c ON p.id_categoria = c.id_categoria '
+        'LEFT JOIN inventario i ON i.id_producto = p.id_producto '
         'WHERE p.activo = 1 AND p.id_producto = ? ',
         ['placeholder.png', product_id]
     ).fetchone()
     conn.close()
     return map_product_row(row) if row else None
 
-def user_can_review(user_email, product_id):
-    if not user_email:
-        return False
-    conn = get_shared_db()
-    row = conn.execute(
-        'SELECT COUNT(*) AS total FROM pedidos p '
-        'JOIN clientes c ON p.id_cliente = c.id_cliente '
-        'JOIN detalle_pedidos dp ON p.id_pedido = dp.id_pedido '
-        'JOIN estados_pedido ep ON p.id_estado = ep.id_estado '
-        'WHERE c.correo = ? AND dp.id_producto = ? AND ep.nombre = "Entregado"',
-        (user_email, product_id)
-    ).fetchone()
-    conn.close()
-    return row['total'] > 0
 
-
-def fetch_reviews(product_id):
-    conn = get_shared_db()
-    rows = conn.execute(
-        'SELECT r.puntuacion, r.comentario, r.fecha, u.nombre AS usuario '
-        'FROM reseñas r '
-        'JOIN usuarios u ON r.id_usuario = u.id_usuario '
-        'WHERE r.id_producto = ? '
-        'ORDER BY r.fecha DESC',
-        (product_id,)
-    ).fetchall()
-    conn.close()
-    return [
-        {
-            'puntuacion': row['puntuacion'],
-            'comentario': row['comentario'],
-            'fecha': row['fecha'],
-            'usuario': row['usuario']
-        } for row in rows
-    ]
-
-
-def get_or_create_client(conn, email, nombre, direccion):
+def get_or_create_client(conn, email, nombre, direccion, telefono='', cedula=''):
     if email:
         cliente = conn.execute('SELECT id_cliente FROM clientes WHERE correo = ? LIMIT 1', (email,)).fetchone()
         if cliente:
+            conn.execute('UPDATE clientes SET telefono = ?, cedula = ? WHERE id_cliente = ?', (telefono, cedula, cliente['id_cliente']))
+            conn.commit()
             return cliente['id_cliente']
 
     cliente = conn.execute('SELECT id_cliente FROM clientes WHERE nombre = ? AND direccion = ? LIMIT 1', (nombre, direccion)).fetchone()
@@ -259,8 +280,8 @@ def get_or_create_client(conn, email, nombre, direccion):
         return cliente['id_cliente']
 
     cursor = conn.execute(
-        'INSERT INTO clientes VALUES (NULL, ?, ?, ?, ?)',
-        (nombre, email, '', direccion)
+        'INSERT INTO clientes (nombre, correo, telefono, direccion, cedula) VALUES (?, ?, ?, ?, ?)',
+        (nombre, email, telefono, direccion, cedula)
     )
     conn.commit()
     return cursor.lastrowid
@@ -284,13 +305,17 @@ def get_or_create_cart(conn, cliente_id):
 
 
 def get_or_create_custom_product(conn, name='Producto Personalizado', description='Producto personalizado', price=30.0):
-    # Siempre crear un nuevo registro para cada personalización
-    # Dejar un nombre legible pero único para evitar que distintos diseños compartan el mismo id
     import time
     unique_name = f"{name} - {int(time.time()*1000)}"
+    cat = conn.execute('SELECT id_categoria FROM categorias WHERE nombre = ? LIMIT 1', ('Personalizado',)).fetchone()
+    if cat:
+        cat_id = cat['id_categoria']
+    else:
+        cur = conn.execute('INSERT INTO categorias (nombre) VALUES (?)', ('Personalizado',))
+        cat_id = cur.lastrowid
     cursor = conn.execute(
-        'INSERT INTO productos (nombre, descripcion, costo, precio_venta, activo) VALUES (?, ?, ?, ?, 1)',
-        (unique_name, description, price, price)
+        'INSERT INTO productos (nombre, descripcion, costo, precio_venta, id_categoria, activo) VALUES (?, ?, ?, ?, ?, 1)',
+        (unique_name, description, price, price, cat_id)
     )
     conn.commit()
     return cursor.lastrowid
@@ -359,7 +384,7 @@ def load_current_user():
         return None
     conn = get_shared_db()
     row = conn.execute(
-        'SELECT id_usuario, nombre, correo FROM usuarios WHERE id_usuario = ? LIMIT 1',
+        'SELECT id_usuario, nombre, correo, telefono FROM usuarios WHERE id_usuario = ? LIMIT 1',
         (session['user_id'],)
     ).fetchone()
     conn.close()
@@ -370,7 +395,7 @@ def load_current_user():
         'id': row['id_usuario'],
         'username': row['nombre'],
         'email': row['correo'],
-        'phone': ''
+        'phone': row['telefono'] or ''
     }
 
 
@@ -502,10 +527,21 @@ def api_products():
 
 @app.route('/api/product/<int:product_id>', methods=['GET'])
 def api_product(product_id):
-    producto = fetch_product_by_id(product_id)
-    if not producto:
-        return jsonify({'mensaje': 'Producto no encontrado.'}), 404
-    return jsonify({'producto': producto})
+    conn = get_shared_db()
+    product = conn.execute(
+        'SELECT p.id_producto, p.nombre, p.descripcion, p.precio_venta AS precio, '
+        'c.nombre AS categoria, IFNULL(i.stock_actual, 0) AS stock, '
+        'COALESCE((SELECT ruta_imagen FROM imagenes_productos WHERE id_producto = p.id_producto LIMIT 1), \'\') AS imagen '
+        'FROM productos p '
+        'LEFT JOIN categorias c ON p.id_categoria = c.id_categoria '
+        'LEFT JOIN inventario i ON i.id_producto = p.id_producto '
+        'WHERE p.id_producto = ?',
+        (product_id,)
+    ).fetchone()
+    conn.close()
+    if not product:
+        return jsonify({'message': 'Producto no encontrado.'}), 404
+    return jsonify({'product': dict(product)})
 
 
 def get_cliente_id_by_session():
@@ -568,7 +604,7 @@ def api_order_detail(order_id):
     conn = get_shared_db()
     order = conn.execute(
         'SELECT p.id_pedido AS id, p.fecha, p.total, e.nombre AS estado, c.nombre AS cliente, c.correo AS cliente_correo, '
-        'env.direccion_envio AS direccion, env.empresa_envio AS payment_method, env.numero_guia AS reference '
+        'env.direccion_envio AS direccion, env.empresa_envio AS empresa_envio, env.metodo_pago AS payment_method, env.referencia_pago AS reference, env.tipo_envio AS tipo_envio '
         'FROM pedidos p '
         'LEFT JOIN estados_pedido e ON p.id_estado = e.id_estado '
         'LEFT JOIN clientes c ON p.id_cliente = c.id_cliente '
@@ -721,6 +757,12 @@ def api_add_to_cart():
     if not p:
         return jsonify({'mensaje': 'Producto no encontrado.'}), 404
 
+    conn = get_shared_db()
+    valid, msg = validate_stock(conn, product_id, quantity)
+    conn.close()
+    if not valid:
+        return jsonify({'mensaje': msg}), 400
+
     cart = load_cart_from_db() if 'user_id' in session else session.get('cart', [])
     if not isinstance(cart, list):
         cart = []
@@ -772,6 +814,17 @@ def api_checkout():
 
     conn = get_shared_db()
     ensure_order_statuses(conn)
+
+    # Validar stock antes de continuar
+    for item in cart_items:
+        product_id = item.get('id')
+        if product_id and product_id != 0:
+            cantidad = max(1, int(item.get('quantity', 1)))
+            valid, msg = validate_stock(conn, product_id, cantidad)
+            if not valid:
+                conn.close()
+                return jsonify({'mensaje': msg}), 400
+
     cliente_id = get_or_create_client(conn, user_email, user_name, address)
     status = conn.execute('SELECT id_estado FROM estados_pedido WHERE nombre = ? LIMIT 1', ('Pendiente',)).fetchone()
     status_id = status['id_estado'] if status else 1
@@ -795,9 +848,27 @@ def api_checkout():
         )
 
     conn.execute(
-        'INSERT INTO envios (id_pedido, direccion_envio, empresa_envio, numero_guia, estado_envio, fecha_envio) VALUES (?, ?, ?, ?, ?, datetime("now"))',
-        (pedido_id, address, payment_method or 'Pendiente', reference or '', 'Pendiente')
+        'INSERT INTO envios (id_pedido, direccion_envio, empresa_envio, numero_guia, estado_envio, fecha_envio, metodo_pago, referencia_pago, tipo_envio) VALUES (?, ?, ?, ?, ?, datetime("now"), ?, ?, ?)',
+        (pedido_id, address, 'Pendiente', '', 'Pendiente', payment_method or 'Pendiente', reference or '', 'destino')
     )
+
+    # También crear registro en ventas / detalle_ventas para que aparezca en Facturas del admin
+    venta_cursor = conn.execute(
+        'INSERT INTO ventas (id_cliente, total) VALUES (?, ?)',
+        (cliente_id, total)
+    )
+    venta_id = venta_cursor.lastrowid
+    for item in cart_items:
+        product_id = item.get('id')
+        if not product_id or product_id == 0:
+            product_id = get_or_create_custom_product(conn)
+        cantidad = max(1, int(item.get('quantity', 1)))
+        precio_unitario = float(item.get('price', 0))
+        conn.execute(
+            'INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
+            (venta_id, product_id, cantidad, precio_unitario)
+        )
+
     conn.commit()
     conn.close()
 
@@ -808,6 +879,81 @@ def api_checkout():
         session.modified = True
 
     return jsonify({'mensaje': 'Checkout completado correctamente.', 'order_id': pedido_id, 'total': total}), 201
+
+
+# ADMIN PANEL - CARRITO POR CLIENTE
+@app.route('/api/admin/cart/<int:cliente_id>', methods=['GET'])
+def admin_get_cart(cliente_id):
+    conn = get_shared_db()
+    carrito_id = get_or_create_cart(conn, cliente_id)
+    items = conn.execute(
+        'SELECT dc.id_detalle, dc.id_producto, dc.cantidad, dc.precio_unitario, p.nombre AS name '
+        'FROM detalle_carrito dc '
+        'LEFT JOIN productos p ON dc.id_producto = p.id_producto '
+        'WHERE dc.id_carrito = ? ORDER BY dc.id_detalle ASC',
+        (carrito_id,)
+    ).fetchall()
+    conn.close()
+    cart = [{
+        'id': item['id_producto'],
+        'name': item['name'] or 'Producto personalizado',
+        'price': float(item['precio_unitario']),
+        'quantity': item['cantidad']
+    } for item in items]
+    return jsonify({'cart': cart})
+
+
+@app.route('/api/admin/cart/<int:cliente_id>', methods=['POST'])
+def admin_save_cart(cliente_id):
+    data = request.get_json() or {}
+    items = data.get('items', [])
+    conn = get_shared_db()
+    carrito_id = get_or_create_cart(conn, cliente_id)
+    conn.execute('DELETE FROM detalle_carrito WHERE id_carrito = ?', (carrito_id,))
+    for item in items:
+        conn.execute(
+            'INSERT INTO detalle_carrito (id_carrito, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
+            (carrito_id, item.get('id'), item.get('quantity', 1), item.get('price', 0))
+        )
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Carrito actualizado correctamente.'})
+
+
+@app.route('/api/admin/invoice/create', methods=['POST'])
+def admin_create_invoice():
+    data = request.get_json() or {}
+    cliente_id = data.get('cliente_id')
+    items = data.get('items', [])
+
+    if not cliente_id or not items:
+        return jsonify({'message': 'Cliente y artículos son requeridos.'}), 400
+
+    conn = get_shared_db()
+
+    for item in items:
+        pid = item.get('id')
+        if pid:
+            qty = int(item.get('quantity', 1))
+            valid, msg = validate_stock(conn, pid, qty)
+            if not valid:
+                conn.close()
+                return jsonify({'message': msg}), 400
+
+    total = sum(float(item.get('price', 0)) * int(item.get('quantity', 1)) for item in items)
+    cursor = conn.execute(
+        'INSERT INTO ventas (id_cliente, total) VALUES (?, ?)',
+        (cliente_id, total)
+    )
+    venta_id = cursor.lastrowid
+    for item in items:
+        conn.execute(
+            'INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
+            (venta_id, item.get('id'), item.get('quantity', 1), item.get('price', 0))
+        )
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Factura creada correctamente.', 'invoice_id': venta_id}), 201
 
 
 # ADMIN PANEL STATIC FILES Y ENDPOINTS
@@ -929,6 +1075,38 @@ def api_invoice_detail(invoice_id):
     invoice['detalles'] = [dict(row) for row in detalles]
     return jsonify(invoice)
 
+
+@app.route('/api/report', methods=['POST'])
+def api_report():
+    data = request.get_json() or {}
+    date_from = data.get('date_from', '')
+    date_to = data.get('date_to', '')
+
+    where = ''
+    params = []
+    if date_from and date_to:
+        where = 'WHERE v.fecha >= ? AND v.fecha <= ?'
+        params = [date_from, date_to + ' 23:59:59']
+
+    conn = get_shared_db()
+    invoices = conn.execute(
+        f'SELECT v.id_venta AS id, c.nombre AS cliente, v.fecha, COUNT(d.id_detalle) AS items, IFNULL(v.total, 0) AS total '
+        f'FROM ventas v LEFT JOIN clientes c ON v.id_cliente = c.id_cliente '
+        f'LEFT JOIN detalle_ventas d ON d.id_venta = v.id_venta '
+        f'{where} '
+        f'GROUP BY v.id_venta ORDER BY v.fecha DESC',
+        params
+    ).fetchall()
+
+    gran_total = sum(row['total'] for row in invoices)
+    conn.close()
+    return jsonify({
+        'invoices': [dict(row) for row in invoices],
+        'gran_total': gran_total,
+        'count': len(invoices)
+    })
+
+
 @app.route('/api/sales-data', methods=['GET'])
 def api_sales_data():
     conn = get_shared_db()
@@ -943,110 +1121,13 @@ def api_sales_data():
     conn.close()
     return jsonify({'products': [dict(row) for row in products], 'clients': [dict(row) for row in clients]})
 
-@app.route('/api/report-data', methods=['GET'])
-def api_report_data():
-
-    conn = get_shared_db()
-
-    try:
-
-        tipo = request.args.get('tipo', 'mensual')
-
-        if tipo == 'diario':
-
-            filtro = """
-            DATE(f.fecha)=DATE('now')
-            """
-
-        elif tipo == 'semanal':
-
-            filtro = """
-            DATE(f.fecha)>=DATE('now','-7 day')
-            """
-
-        elif tipo == 'anual':
-
-            filtro = """
-            strftime('%Y',f.fecha)=strftime('%Y','now')
-            """
-
-        else:
-
-            filtro = """
-            strftime('%m',f.fecha)=strftime('%m','now')
-            """
-
-        ventas = conn.execute(f"""
-
-            SELECT
-
-                f.numero_factura,
-
-                f.fecha,
-
-                c.nombre AS cliente,
-
-                p.nombre AS producto,
-
-                d.cantidad,
-
-                d.precio_unitario,
-
-                f.subtotal,
-
-                f.impuesto,
-
-                f.total_usd,
-
-                f.total_bs,
-
-                tc.tasa
-
-            FROM facturas f
-
-            INNER JOIN ventas v
-                ON v.id_venta = f.id_venta
-
-            INNER JOIN clientes c
-                ON c.id_cliente = v.id_cliente
-
-            INNER JOIN detalle_ventas d
-                ON d.id_venta = v.id_venta
-
-            INNER JOIN productos p
-                ON p.id_producto = d.id_producto
-
-            LEFT JOIN tasas_cambio tc
-                ON tc.id_tasa = f.id_tasa
-
-            WHERE {filtro}
-
-            ORDER BY f.fecha DESC
-
-        """).fetchall()
-
-        conn.close()
-
-        return jsonify({
-            'ventas': [dict(row) for row in ventas]
-        })
-
-    except Exception as e:
-
-        conn.close()
-
-        return jsonify({
-            'message': str(e)
-        }), 500
-
 @app.route('/api/product', methods=['POST'])
 def api_create_product():
-    data = request.get_json() or {}
-    nombre = data.get('nombre')
-    categoria = data.get('categoria')
-    precio = data.get('precio')
-    stock = data.get('stock', 0)
-    descripcion = data.get('descripcion', '')
+    nombre = request.form.get('nombre')
+    categoria = request.form.get('categoria')
+    precio = request.form.get('precio', type=float)
+    stock = request.form.get('stock', 0, type=int)
+    descripcion = request.form.get('descripcion', '')
 
     if not nombre or not categoria or precio is None:
         return jsonify({'message': 'Nombre, categoría y precio son requeridos.'}), 400
@@ -1065,18 +1146,27 @@ def api_create_product():
     )
     product_id = product_cursor.lastrowid
     conn.execute('INSERT INTO inventario (id_producto, stock_actual) VALUES (?, ?)', (product_id, stock))
+
+    imagen = request.files.get('imagen')
+    if imagen and imagen.filename:
+        ext = imagen.filename.rsplit('.', 1)[-1].lower() if '.' in imagen.filename else 'png'
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'images')
+        os.makedirs(images_dir, exist_ok=True)
+        imagen.save(os.path.join(images_dir, filename))
+        conn.execute('INSERT INTO imagenes_productos (id_producto, ruta_imagen) VALUES (?, ?)', (product_id, filename))
+
     conn.commit()
     conn.close()
     return jsonify({'message': 'Producto creado correctamente.', 'id_producto': product_id}), 201
 
 @app.route('/api/product/<int:product_id>', methods=['PUT'])
 def api_update_product(product_id):
-    data = request.get_json() or {}
-    nombre = data.get('nombre')
-    categoria = data.get('categoria')
-    precio = data.get('precio')
-    stock = data.get('stock')
-    descripcion = data.get('descripcion', '')
+    nombre = request.form.get('nombre')
+    categoria = request.form.get('categoria')
+    precio = request.form.get('precio', type=float)
+    stock = request.form.get('stock', type=int)
+    descripcion = request.form.get('descripcion', '')
 
     if not nombre or not categoria or precio is None or stock is None:
         return jsonify({'message': 'Nombre, categoría, precio y stock son requeridos.'}), 400
@@ -1096,6 +1186,20 @@ def api_update_product(product_id):
         conn.execute('UPDATE inventario SET stock_actual = ? WHERE id_producto = ?', (stock, product_id))
     else:
         conn.execute('INSERT INTO inventario (id_producto, stock_actual) VALUES (?, ?)', (product_id, stock))
+
+    imagen = request.files.get('imagen')
+    if imagen and imagen.filename:
+        ext = imagen.filename.rsplit('.', 1)[-1].lower() if '.' in imagen.filename else 'png'
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'images')
+        os.makedirs(images_dir, exist_ok=True)
+        imagen.save(os.path.join(images_dir, filename))
+        existing_img = conn.execute('SELECT id_imagen FROM imagenes_productos WHERE id_producto = ? LIMIT 1', (product_id,)).fetchone()
+        if existing_img:
+            conn.execute('UPDATE imagenes_productos SET ruta_imagen = ? WHERE id_producto = ?', (filename, product_id))
+        else:
+            conn.execute('INSERT INTO imagenes_productos (id_producto, ruta_imagen) VALUES (?, ?)', (product_id, filename))
+
     conn.commit()
     conn.close()
     return jsonify({'message': 'Producto actualizado correctamente.'})
@@ -1175,6 +1279,39 @@ def api_recover():
     return jsonify({'message': 'Contraseña actualizada con éxito.'})
 
 
+# Migración: agregar columnas si no existen
+try:
+    conn = get_shared_db()
+    conn.execute('ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(20)')
+    conn.commit()
+except Exception:
+    pass
+try:
+    conn = get_shared_db()
+    conn.execute('ALTER TABLE clientes ADD COLUMN cedula VARCHAR(20)')
+    conn.commit()
+except Exception:
+    pass
+try:
+    conn = get_shared_db()
+    conn.execute('ALTER TABLE envios ADD COLUMN metodo_pago VARCHAR(50)')
+    conn.commit()
+except Exception:
+    pass
+try:
+    conn = get_shared_db()
+    conn.execute('ALTER TABLE envios ADD COLUMN referencia_pago VARCHAR(100)')
+    conn.commit()
+except Exception:
+    pass
+try:
+    conn = get_shared_db()
+    conn.execute('ALTER TABLE envios ADD COLUMN tipo_envio VARCHAR(50)')
+    conn.commit()
+except Exception:
+    pass
+conn.close()
+
 # Semillas en la base de datos compartida (esquema SQL en español)
 conn = get_shared_db()
 try:
@@ -1182,14 +1319,29 @@ try:
 except Exception:
     total = 0
 
+# Migrar categorías: insertar las 7 estándar + Personalizado
+all_categories = CATEGORIES + ['Personalizado']
+for cat_name in all_categories:
+    existing = conn.execute('SELECT id_categoria FROM categorias WHERE nombre = ? LIMIT 1', (cat_name,)).fetchone()
+    if not existing:
+        conn.execute('INSERT INTO categorias (nombre) VALUES (?)', (cat_name,))
+
+# Reasignar productos con categorías antiguas a 'camisas' y eliminar las viejas
+old_cats = [dict(r) for r in conn.execute(
+    'SELECT id_categoria, nombre FROM categorias WHERE nombre NOT IN ({})'.format(
+        ','.join('?' for _ in all_categories)
+    ), all_categories
+).fetchall()]
+if old_cats:
+    default_cat = dict(conn.execute('SELECT id_categoria FROM categorias WHERE nombre = ? LIMIT 1', ('camisas',)).fetchone())
+    default_id = default_cat['id_categoria']
+    for old in old_cats:
+        conn.execute('UPDATE productos SET id_categoria = ? WHERE id_categoria = ?', (default_id, old['id_categoria']))
+        conn.execute('DELETE FROM categorias WHERE id_categoria = ?', (old['id_categoria'],))
+
 if total == 0:
-    # Crear categoría 'Taza' si no existe
-    cat = conn.execute('SELECT id_categoria FROM categorias WHERE nombre = ? LIMIT 1', ('Taza',)).fetchone()
-    if cat:
-        cat_id = cat['id_categoria']
-    else:
-        cur = conn.execute('INSERT INTO categorias (nombre) VALUES (?)', ('Taza',))
-        cat_id = cur.lastrowid
+    taza_cat = conn.execute('SELECT id_categoria FROM categorias WHERE nombre = ? LIMIT 1', ('tazas',)).fetchone()
+    cat_id = taza_cat['id_categoria']
 
     sample_products = [
         ('Taza Baki', 'Taza Baki personalizada', 15.00, 'taza baki.jpeg'),
@@ -1213,6 +1365,16 @@ if total == 0:
     conn.commit()
 
 conn.close()
+
+@app.route('/newsletter', methods=['POST'])
+def newsletter():
+    email = request.form.get('email', '').strip()
+    if email:
+        flash('¡Gracias por suscribirte!', 'success')
+    else:
+        flash('Ingresa un correo válido.', 'error')
+    return redirect(request.referrer or url_for('home'))
+
 @app.route('/')
 def home():
     trending = fetch_products(sort_option='newest', limit=8)
@@ -1228,9 +1390,10 @@ def catalogo():
     
     # Obtener categorías para el filtro
     conn = get_shared_db()
-    categorias = conn.execute('SELECT nombre FROM categorias ORDER BY nombre').fetchall()
+    db_cats = {row['nombre'] for row in conn.execute('SELECT nombre FROM categorias').fetchall()}
     conn.close()
-    categorias_list = [row['nombre'] for row in categorias]
+    order = CATEGORIES + ['Personalizado']
+    categorias_list = [c for c in order if c in db_cats]
     
     cart_count = len(load_cart_from_db()) if 'user_id' in session else len(session.get('cart', []))
     return render_template('catalogo.html', productos=productos, categorias=categorias_list, cart_count=cart_count)
@@ -1242,13 +1405,7 @@ def producto(id):
         if '404.html' in os.listdir(os.path.join(BASE_DIR, 'templates')):
             return render_template('404.html'), 404
         return 'Producto no encontrado', 404
-    
-    reviews = fetch_reviews(id)
-    can_review = False
-    if 'user_id' in session:
-        can_review = user_can_review(session.get('user_email'), id)
-        
-    return render_template('producto.html', producto=p, reviews=reviews, can_review=can_review)
+    return render_template('producto.html', producto=p)
 
 @app.route('/personalizar', methods=['GET', 'POST'])
 def personalizar():
@@ -1395,14 +1552,50 @@ def checkout():
     total = sum(item['price'] * item.get('quantity', 1) for item in cart)
 
     if request.method == 'POST' and request.form.get('name'):
-        name = request.form.get('name')
-        address = request.form.get('address')
+        name = request.form.get('name', 'Cliente')
+        telefono = request.form.get('telefono', '').strip()
+        cedula = request.form.get('cedula', '').strip()
+        shipping_method = request.form.get('shipping_method', 'destino')
+        empresa_envio = request.form.get('empresa_envio', '')
+        codigo_agencia = request.form.get('codigo_agencia', '').strip()
+        ciudad = request.form.get('ciudad', '').strip()
+        estado = request.form.get('estado', '').strip()
         payment_method = request.form.get('payment_method')
-        reference = request.form.get('reference')
+        reference = request.form.get('reference', '')
+
+        # Compose address from new fields
+        if shipping_method == 'tienda':
+            address = 'Retiro en Tienda — Av. Principal, Local 5, CC La Cascada, Caracas'
+        else:
+            parts = []
+            if empresa_envio: parts.append(empresa_envio)
+            if codigo_agencia: parts.append('Cód: ' + codigo_agencia)
+            if ciudad: parts.append(ciudad)
+            if estado: parts.append(estado)
+            address = ', '.join(parts) if parts else 'Por especificar'
+
+        # Build a descriptive empresa_envio that includes shipping type
+        tipo_labels = {'destino': 'Cobro a Destino', 'tienda': 'Retiro en Tienda', 'agencia': 'Retirar en Agencia'}
+        tipo_label = tipo_labels.get(shipping_method, '')
+        if shipping_method in ('destino', 'agencia') and empresa_envio:
+            envio_desc = f'{tipo_label} - {empresa_envio}'
+        else:
+            envio_desc = tipo_label
 
         conn = get_shared_db()
         ensure_order_statuses(conn)
-        cliente_id = get_or_create_client(conn, session.get('user_email'), session.get('username') or name, address)
+
+        # Validar stock antes de continuar
+        for item in cart:
+            product_id = item.get('id')
+            if product_id:
+                valid, msg = validate_stock(conn, product_id, item.get('quantity', 1))
+                if not valid:
+                    conn.close()
+                    flash(msg, 'error')
+                    return redirect(url_for('carrito'))
+
+        cliente_id = get_or_create_client(conn, session.get('user_email'), name, address, telefono, cedula)
         status = conn.execute('SELECT id_estado FROM estados_pedido WHERE nombre = ? LIMIT 1', ('Pendiente',)).fetchone()
         status_id = status['id_estado'] if status else 1
 
@@ -1422,22 +1615,38 @@ def checkout():
                 (pedido_id, product_id, cantidad, item['price'])
             )
 
-    conn.execute(
-        'INSERT INTO envios (id_pedido, direccion_envio, empresa_envio, numero_guia, estado_envio, fecha_envio) VALUES (?, ?, ?, ?, ?, datetime("now"))',
-        (pedido_id, address, payment_method or 'Pendiente', reference or '', 'Pendiente',)
-    )
-    conn.commit()
-    conn.close()
+        conn.execute(
+            'INSERT INTO envios (id_pedido, direccion_envio, empresa_envio, numero_guia, estado_envio, fecha_envio, metodo_pago, referencia_pago, tipo_envio) VALUES (?, ?, ?, ?, ?, datetime("now"), ?, ?, ?)',
+            (pedido_id, address, envio_desc, '', 'Pendiente', payment_method, reference, shipping_method)
+        )
 
-    # Limpiar carrito y checkout
-    if 'checkout_items' in session:
-        session.pop('checkout_items', None)
-    if 'user_id' in session:
-        save_cart_to_db([])
-    else:
-        session.pop('cart', None)
-    
-    return redirect(url_for('factura', order_id=pedido_id))
+        # También crear registro en ventas / detalle_ventas para que aparezca en Facturas del admin
+        venta_cursor = conn.execute(
+            'INSERT INTO ventas (id_cliente, total) VALUES (?, ?)',
+            (cliente_id, total)
+        )
+        venta_id = venta_cursor.lastrowid
+        for item in cart:
+            product_id = item.get('id')
+            if not product_id:
+                product_id = get_or_create_custom_product(conn)
+            conn.execute(
+                'INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
+                (venta_id, product_id, item.get('quantity', 1), item['price'])
+            )
+
+        conn.commit()
+        conn.close()
+
+        # Limpiar carrito y checkout
+        if 'checkout_items' in session:
+            session.pop('checkout_items', None)
+        if 'user_id' in session:
+            save_cart_to_db([])
+        else:
+            session.pop('cart', None)
+        
+        return redirect(url_for('factura', order_id=pedido_id))
 
     cart_count = len(cart)
     return render_template('checkout.html', total=total, cart_count=cart_count, item_count=len(cart))
@@ -1446,7 +1655,9 @@ def checkout():
 def factura(order_id):
     conn = get_shared_db()
     order_row = conn.execute(
-        'SELECT p.id_pedido AS id, p.total, p.fecha, e.nombre AS estado, c.nombre AS cliente, c.correo, env.direccion_envio AS address, env.empresa_envio AS payment_method, env.numero_guia AS reference '
+        'SELECT p.id_pedido AS id, p.total, p.fecha, e.nombre AS estado, c.nombre AS cliente, c.correo, '
+        'env.direccion_envio AS address, env.empresa_envio AS empresa_envio, '
+        'env.metodo_pago AS payment_method, env.referencia_pago AS reference, env.tipo_envio AS tipo_envio '
         'FROM pedidos p '
         'LEFT JOIN estados_pedido e ON p.id_estado = e.id_estado '
         'LEFT JOIN clientes c ON p.id_cliente = c.id_cliente '
@@ -1485,6 +1696,8 @@ def factura(order_id):
         'address': order_row['address'] or '',
         'payment_method': order_row['payment_method'] or '',
         'reference': order_row['reference'] or '',
+        'empresa_envio': order_row['empresa_envio'] or '',
+        'tipo_envio': order_row['tipo_envio'] or '',
     }
     return render_template('factura.html', order=order, items=items_list)
 
@@ -1533,6 +1746,7 @@ def registro():
         username = request.form.get('username')
         password = request.form.get('password')
         email = request.form.get('email')
+        telefono = request.form.get('telefono', '')
 
         conn = get_shared_db()
         existing_user = conn.execute(
@@ -1547,8 +1761,8 @@ def registro():
             role = conn.execute('SELECT id_rol FROM roles WHERE nombre = ? LIMIT 1', ('Trabajador',)).fetchone()
             role_id = role['id_rol'] if role else 2
             conn.execute(
-                'INSERT INTO usuarios VALUES (NULL, ?, ?, ?, ?)',
-                (username, email, password, role_id)
+                'INSERT INTO usuarios (id_usuario, nombre, correo, contraseña, id_rol, telefono) VALUES (NULL, ?, ?, ?, ?, ?)',
+                (username, email, password, role_id, telefono)
             )
             conn.commit()
             flash('Cuenta creada exitosamente. ¡Bienvenido!', 'success')
@@ -1605,316 +1819,152 @@ def privacidad():
 def perfil():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-        
     user = load_current_user()
     if not user:
         flash('No se encontró información de usuario. Inicia sesión nuevamente.', 'error')
         return redirect(url_for('logout'))
-        
-    conn = get_shared_db()
-    
+
     if request.method == 'POST':
         action = request.form.get('action')
-        
+        conn = get_shared_db()
+
         if action == 'cambiar_password':
-            current_pass = request.form.get('current_password')
-            new_pass = request.form.get('new_password')
-            confirm_pass = request.form.get('confirm_password')
-            
-            user_db = conn.execute('SELECT contraseña FROM usuarios WHERE id_usuario = ? LIMIT 1', (session['user_id'],)).fetchone()
-            
-            if new_pass != confirm_pass:
-                flash('La nueva contraseña y la confirmación no coinciden.', 'error')
-            elif user_db and user_db['contraseña'] != current_pass:
-                flash('La contraseña actual es incorrecta.', 'error')
+            current_pw = request.form.get('current_password', '')
+            new_pw = request.form.get('new_password', '')
+            confirm_pw = request.form.get('confirm_password', '')
+
+            row = conn.execute('SELECT contraseña FROM usuarios WHERE id_usuario = ? LIMIT 1', (session['user_id'],)).fetchone()
+            if not row or row['contraseña'] != current_pw:
+                flash('La contraseña actual no es correcta.', 'error')
+            elif len(new_pw) < 6:
+                flash('La nueva contraseña debe tener al menos 6 caracteres.', 'error')
+            elif new_pw != confirm_pw:
+                flash('Las contraseñas nuevas no coinciden.', 'error')
             else:
-                conn.execute('UPDATE usuarios SET contraseña = ? WHERE id_usuario = ?', (new_pass, session['user_id']))
+                conn.execute('UPDATE usuarios SET contraseña = ? WHERE id_usuario = ?', (new_pw, session['user_id']))
                 conn.commit()
-                flash('Contraseña actualizada exitosamente.', 'success')
-                
+                flash('Contraseña actualizada con éxito.', 'success')
+
         elif action == 'cambiar_email':
-            new_email = request.form.get('new_email')
-            existing = conn.execute('SELECT id_usuario FROM usuarios WHERE correo = ? AND id_usuario != ? LIMIT 1', (new_email, session['user_id'])).fetchone()
-            if existing:
-                flash('El correo electrónico ya está registrado por otro usuario.', 'error')
+            new_email = request.form.get('new_email', '').strip()
+            if not new_email or '@' not in new_email:
+                flash('Ingresa un correo electrónico válido.', 'error')
             else:
-                conn.execute('UPDATE usuarios SET correo = ? WHERE id_usuario = ?', (new_email, session['user_id']))
-                conn.execute('UPDATE clientes SET correo = ? WHERE correo = ?', (new_email, user['email']))
-                conn.commit()
-                session['user_email'] = new_email
-                flash('Correo electrónico actualizado exitosamente.', 'success')
-                
+                existing = conn.execute('SELECT id_usuario FROM usuarios WHERE correo = ? AND id_usuario != ? LIMIT 1', (new_email, session['user_id'])).fetchone()
+                if existing:
+                    flash('Ese correo ya está en uso por otro usuario.', 'error')
+                else:
+                    conn.execute('UPDATE usuarios SET correo = ? WHERE id_usuario = ?', (new_email, session['user_id']))
+                    conn.commit()
+                    session['user_email'] = new_email
+                    flash('Correo electrónico actualizado con éxito.', 'success')
+
         elif action == 'cambiar_telefono':
-            flash('Número de teléfono actualizado exitosamente.', 'success')
-            
+            phone = request.form.get('phone', '').strip()
+            conn.execute('UPDATE usuarios SET telefono = ? WHERE id_usuario = ?', (phone, session['user_id']))
+            conn.commit()
+            flash('Teléfono actualizado con éxito.', 'success')
+
         conn.close()
         return redirect(url_for('perfil'))
-        
-    # GET method
-    cliente = conn.execute('SELECT id_cliente FROM clientes WHERE correo = ? LIMIT 1', (user['email'],)).fetchone()
-    orders_with_items = []
-    if cliente:
-        orders = conn.execute(
-            'SELECT p.id_pedido, p.total, p.fecha, ep.nombre AS status, env.direccion_envio AS address, env.empresa_envio AS payment_method '
-            'FROM pedidos p '
-            'LEFT JOIN estados_pedido ep ON p.id_estado = ep.id_estado '
-            'LEFT JOIN envios env ON env.id_pedido = p.id_pedido '
-            'WHERE p.id_cliente = ? '
-            'ORDER BY p.id_pedido DESC',
-            (cliente['id_cliente'],)
-        ).fetchall()
-        
-        for order in orders:
-            items = conn.execute(
-                'SELECT dp.cantidad, dp.precio_unitario, pr.nombre AS name '
-                'FROM detalle_pedidos dp '
-                'LEFT JOIN productos pr ON dp.id_producto = pr.id_producto '
-                'WHERE dp.id_pedido = ?',
-                (order['id_pedido'],)
-            ).fetchall()
-            
-            items_list = [
-                {
-                    'name': item['name'] or 'Producto personalizado',
-                    'price': float(item['precio_unitario'])
-                } for item in items
-            ]
-            
-            orders_with_items.append({
-                'order': {
-                    'id': order['id_pedido'],
-                    'status': order['status'] or 'Pendiente',
-                    'total': float(order['total']),
-                    'address': order['address'] or '',
-                    'payment_method': order['payment_method'] or 'N/A'
-                },
-                'items': items_list
-            })
-            
-    links = conn.execute('SELECT proveedor, proveedor_correo FROM cuentas_vinculadas WHERE id_usuario = ?', (session['user_id'],)).fetchall()
-    linked_accounts = {row['proveedor']: row['proveedor_correo'] for row in links}
-    conn.close()
-    
+
     cart_count = len(load_cart_from_db()) if 'user_id' in session else len(session.get('cart', []))
-    return render_template(
-        'perfil.html',
-        user=user,
-        cart_count=cart_count,
-        orders_with_items=orders_with_items,
-        linked_accounts=linked_accounts
-    )
-
-
-@app.route('/newsletter', methods=['POST'])
-def newsletter():
-    data = request.get_json(silent=True) or request.form
-    email = data.get('email')
-    if not email:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
-            return jsonify({'success': False, 'message': 'Correo inválido.'}), 400
-        flash('Correo electrónico inválido.', 'error')
-        return redirect(request.referrer or url_for('home'))
-        
     conn = get_shared_db()
+    links = conn.execute('SELECT proveedor, proveedor_correo FROM cuentas_vinculadas WHERE id_usuario = ?', (session['user_id'],)).fetchall()
+    conn.close()
+    linked_accounts = {row['proveedor']: row['proveedor_correo'] for row in links}
+    return render_template('perfil.html', user=user, cart_count=cart_count, linked_accounts=linked_accounts)
+
+
+@app.route('/auth/google/callback')
+def auth_google_callback():
+    code = request.args.get('code')
+    state = request.args.get('state', '')
+    error = request.args.get('error')
+    if error or not code:
+        flash(f'Error al iniciar sesión con Google: {error or "Código no recibido"}', 'error')
+        return render_template('popup_close.html')
+    link_mode = state == 'link'
     try:
-        conn.execute('INSERT INTO newsletter (correo) VALUES (?)', (email,))
-        conn.commit()
-        msg = '¡Gracias por suscribirte al boletín!'
-        status = 'success'
-    except sqlite3.IntegrityError:
-        msg = 'Este correo ya está registrado en el boletín.'
-        status = 'info'
-    finally:
+        user_info = exchange_google_code(code)
+    except Exception as e:
+        flash(f'Error al conectar con Google: {str(e)}', 'error')
+        return render_template('popup_close.html')
+    provider_id = f"google_{user_info['id']}"
+    email = user_info.get('email', '')
+    username = user_info.get('name', user_info.get('given_name', 'Google User'))
+    conn = get_shared_db()
+    if link_mode and 'user_id' in session:
+        current_user_id = session['user_id']
+        existing = conn.execute('SELECT id_usuario FROM cuentas_vinculadas WHERE proveedor = "google" AND proveedor_id = ? LIMIT 1', (provider_id,)).fetchone()
+        if existing:
+            flash('Esta cuenta de Google ya está vinculada a otro usuario.' if existing['id_usuario'] != current_user_id else 'Esta cuenta de Google ya está vinculada a tu cuenta.', 'info')
+        else:
+            try:
+                conn.execute('INSERT INTO cuentas_vinculadas (id_usuario, proveedor, proveedor_id, proveedor_correo) VALUES (?, "google", ?, ?)', (current_user_id, provider_id, email))
+                conn.commit()
+                flash('Cuenta de Google vinculada exitosamente.', 'success')
+            except sqlite3.IntegrityError:
+                flash('Ya tienes una cuenta de Google vinculada a este perfil.', 'error')
         conn.close()
-    
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
-        return jsonify({'success': True, 'message': msg, 'status': status})
-    flash(msg, status)
-    return redirect(request.referrer or url_for('home'))
+        return render_template('popup_close.html')
+    linked = conn.execute('SELECT id_usuario FROM cuentas_vinculadas WHERE proveedor = "google" AND proveedor_id = ? LIMIT 1', (provider_id,)).fetchone()
+    if linked:
+        user_id = linked['id_usuario']
+        user_row = conn.execute('SELECT nombre, correo FROM usuarios WHERE id_usuario = ? LIMIT 1', (user_id,)).fetchone()
+        if user_row:
+            username = user_row['nombre']
+            email = user_row['correo']
+        else:
+            conn.execute('DELETE FROM cuentas_vinculadas WHERE proveedor = "google" AND proveedor_id = ?', (provider_id,))
+            conn.commit()
+            linked = None
+    if not linked:
+        user = conn.execute('SELECT id_usuario, nombre FROM usuarios WHERE correo = ? LIMIT 1', (email,)).fetchone()
+        if user:
+            user_id = user['id_usuario']
+            username = user['nombre']
+            try:
+                conn.execute('INSERT INTO cuentas_vinculadas (id_usuario, proveedor, proveedor_id, proveedor_correo) VALUES (?, "google", ?, ?)', (user_id, provider_id, email))
+                conn.commit()
+            except sqlite3.IntegrityError:
+                pass
+        else:
+            role = conn.execute('SELECT id_rol FROM roles WHERE nombre = ? LIMIT 1', ('Trabajador',)).fetchone()
+            role_id = role['id_rol'] if role else 2
+            cursor = conn.execute('INSERT INTO usuarios (nombre, correo, contraseña, id_rol) VALUES (?, ?, ?, ?)', (username, email, 'oauth_simulated', role_id))
+            user_id = cursor.lastrowid
+            conn.execute('INSERT INTO cuentas_vinculadas (id_usuario, proveedor, proveedor_id, proveedor_correo) VALUES (?, "google", ?, ?)', (user_id, provider_id, email))
+            conn.commit()
+    conn.close()
+    session['user_id'] = user_id
+    session['username'] = username
+    session['user_email'] = email
+    guest_cart = session.get('cart', [])
+    merge_guest_cart_into_db(guest_cart)
+    flash('¡Bienvenido! Iniciaste sesión exitosamente con Google.', 'success')
+    return render_template('popup_close.html')
 
 
 @app.route('/login/google')
 def login_google():
-    username = request.args.get('username', 'Google User')
-    email = request.args.get('email', 'google_user@example.com')
-    provider_id = request.args.get('provider_id', 'google_123456789')
-    link_mode = request.args.get('link') == 'true' or 'user_id' in session
-    
-    conn = get_shared_db()
-    
-    if link_mode and 'user_id' in session:
-        current_user_id = session['user_id']
-        existing = conn.execute(
-            'SELECT id_usuario FROM cuentas_vinculadas WHERE proveedor = "google" AND proveedor_id = ? LIMIT 1',
-            (provider_id,)
-        ).fetchone()
-        
-        if existing:
-            if existing['id_usuario'] == current_user_id:
-                flash('Esta cuenta de Google ya está vinculada a tu cuenta.', 'info')
-            else:
-                flash('Esta cuenta de Google ya está vinculada a otro usuario.', 'error')
-            conn.close()
-            return redirect(url_for('perfil'))
-            
-        try:
-            conn.execute(
-                'INSERT INTO cuentas_vinculadas (id_usuario, proveedor, proveedor_id, proveedor_correo) VALUES (?, "google", ?, ?)',
-                (current_user_id, provider_id, email)
-            )
-            conn.commit()
-            flash('Cuenta de Google vinculada exitosamente.', 'success')
-        except sqlite3.IntegrityError:
-            flash('Ya tienes una cuenta de Google vinculada a este perfil.', 'error')
-        finally:
-            conn.close()
-            
-        return redirect(url_for('perfil'))
-        
-    else:
-        linked = conn.execute(
-            'SELECT id_usuario FROM cuentas_vinculadas WHERE proveedor = "google" AND proveedor_id = ? LIMIT 1',
-            (provider_id,)
-        ).fetchone()
-        
-        if linked:
-            user_id = linked['id_usuario']
-            user_row = conn.execute('SELECT nombre, correo FROM usuarios WHERE id_usuario = ? LIMIT 1', (user_id,)).fetchone()
-            if user_row:
-                username = user_row['nombre']
-                email = user_row['correo']
-            else:
-                conn.execute('DELETE FROM cuentas_vinculadas WHERE proveedor = "google" AND proveedor_id = ?', (provider_id,))
-                conn.commit()
-                linked = None
-                
-        if not linked:
-            user = conn.execute('SELECT id_usuario, nombre FROM usuarios WHERE correo = ? LIMIT 1', (email,)).fetchone()
-            if user:
-                user_id = user['id_usuario']
-                username = user['nombre']
-                try:
-                    conn.execute(
-                        'INSERT INTO cuentas_vinculadas (id_usuario, proveedor, proveedor_id, proveedor_correo) VALUES (?, "google", ?, ?)',
-                        (user_id, provider_id, email)
-                    )
-                    conn.commit()
-                except sqlite3.IntegrityError:
-                    pass
-            else:
-                role = conn.execute('SELECT id_rol FROM roles WHERE nombre = ? LIMIT 1', ('Trabajador',)).fetchone()
-                role_id = role['id_rol'] if role else 2
-                cursor = conn.execute('INSERT INTO usuarios VALUES (NULL, ?, ?, ?, ?)', (username, email, 'oauth_simulated', role_id))
-                user_id = cursor.lastrowid
-                conn.execute(
-                    'INSERT INTO cuentas_vinculadas (id_usuario, proveedor, proveedor_id, proveedor_correo) VALUES (?, "google", ?, ?)',
-                    (user_id, provider_id, email)
-                )
-                conn.commit()
-                
-        conn.close()
-        
-        session['user_id'] = user_id
-        session['username'] = username
-        session['user_email'] = email
-        
-        guest_cart = session.get('cart', [])
-        merge_guest_cart_into_db(guest_cart)
-        
-        flash('¡Bienvenido! Iniciaste sesión exitosamente con Google.', 'success')
-        return redirect(url_for('home'))
+    if not GOOGLE_CLIENT_ID:
+        flash('Google Login no está configurado. Configura GOOGLE_CLIENT_ID.', 'error')
+        return redirect(url_for('login'))
+    state = 'link' if 'user_id' in session else ''
+    return redirect(google_oauth_url(state=state))
+
+
+@app.route('/auth/facebook/callback')
+def auth_facebook_callback():
+    flash('Facebook Login no está disponible actualmente.', 'error')
+    return render_template('popup_close.html')
 
 
 @app.route('/login/facebook')
 def login_facebook():
-    username = request.args.get('username', 'Facebook User')
-    email = request.args.get('email', 'facebook_user@example.com')
-    provider_id = request.args.get('provider_id', 'facebook_123456789')
-    link_mode = request.args.get('link') == 'true' or 'user_id' in session
-    
-    conn = get_shared_db()
-    
-    if link_mode and 'user_id' in session:
-        current_user_id = session['user_id']
-        existing = conn.execute(
-            'SELECT id_usuario FROM cuentas_vinculadas WHERE proveedor = "facebook" AND proveedor_id = ? LIMIT 1',
-            (provider_id,)
-        ).fetchone()
-        
-        if existing:
-            if existing['id_usuario'] == current_user_id:
-                flash('Esta cuenta de Facebook ya está vinculada a tu cuenta.', 'info')
-            else:
-                flash('Esta cuenta de Facebook ya está vinculada a otro usuario.', 'error')
-            conn.close()
-            return redirect(url_for('perfil'))
-            
-        try:
-            conn.execute(
-                'INSERT INTO cuentas_vinculadas (id_usuario, proveedor, proveedor_id, proveedor_correo) VALUES (?, "facebook", ?, ?)',
-                (current_user_id, provider_id, email)
-            )
-            conn.commit()
-            flash('Cuenta de Facebook vinculada exitosamente.', 'success')
-        except sqlite3.IntegrityError:
-            flash('Ya tienes una cuenta de Facebook vinculada a este perfil.', 'error')
-        finally:
-            conn.close()
-            
-        return redirect(url_for('perfil'))
-        
-    else:
-        linked = conn.execute(
-            'SELECT id_usuario FROM cuentas_vinculadas WHERE proveedor = "facebook" AND proveedor_id = ? LIMIT 1',
-            (provider_id,)
-        ).fetchone()
-        
-        if linked:
-            user_id = linked['id_usuario']
-            user_row = conn.execute('SELECT nombre, correo FROM usuarios WHERE id_usuario = ? LIMIT 1', (user_id,)).fetchone()
-            if user_row:
-                username = user_row['nombre']
-                email = user_row['correo']
-            else:
-                conn.execute('DELETE FROM cuentas_vinculadas WHERE proveedor = "facebook" AND proveedor_id = ?', (provider_id,))
-                conn.commit()
-                linked = None
-                
-        if not linked:
-            user = conn.execute('SELECT id_usuario, nombre FROM usuarios WHERE correo = ? LIMIT 1', (email,)).fetchone()
-            if user:
-                user_id = user['id_usuario']
-                username = user['nombre']
-                try:
-                    conn.execute(
-                        'INSERT INTO cuentas_vinculadas (id_usuario, proveedor, proveedor_id, proveedor_correo) VALUES (?, "facebook", ?, ?)',
-                        (user_id, provider_id, email)
-                    )
-                    conn.commit()
-                except sqlite3.IntegrityError:
-                    pass
-            else:
-                role = conn.execute('SELECT id_rol FROM roles WHERE nombre = ? LIMIT 1', ('Trabajador',)).fetchone()
-                role_id = role['id_rol'] if role else 2
-                cursor = conn.execute('INSERT INTO usuarios VALUES (NULL, ?, ?, ?, ?)', (username, email, 'oauth_simulated', role_id))
-                user_id = cursor.lastrowid
-                conn.execute(
-                    'INSERT INTO cuentas_vinculadas (id_usuario, proveedor, proveedor_id, proveedor_correo) VALUES (?, "facebook", ?, ?)',
-                    (user_id, provider_id, email)
-                )
-                conn.commit()
-                
-        conn.close()
-        
-        session['user_id'] = user_id
-        session['username'] = username
-        session['user_email'] = email
-        
-        guest_cart = session.get('cart', [])
-        merge_guest_cart_into_db(guest_cart)
-        
-        flash('¡Bienvenido! Iniciaste sesión exitosamente con Facebook.', 'success')
-        return redirect(url_for('home'))
+    flash('Facebook Login no está disponible actualmente. Usa Google o crea una cuenta.', 'error')
+    return redirect(url_for('login'))
 
 
 @app.route('/perfil/desvincular/<proveedor>', methods=['POST'])
@@ -1922,75 +1972,31 @@ def unlink_social(proveedor):
     if 'user_id' not in session:
         flash('Debes iniciar sesión para desvincular una cuenta.', 'error')
         return redirect(url_for('login'))
-        
+
     if proveedor not in ['google', 'facebook']:
         flash('Proveedor inválido.', 'error')
         return redirect(url_for('perfil'))
-        
+
     conn = get_shared_db()
     try:
         user = conn.execute('SELECT contraseña FROM usuarios WHERE id_usuario = ? LIMIT 1', (session['user_id'],)).fetchone()
         other_links = conn.execute('SELECT COUNT(*) AS total FROM cuentas_vinculadas WHERE id_usuario = ? AND proveedor != ?', (session['user_id'], proveedor)).fetchone()
-        
+
         has_password = user and user['contraseña'] != 'oauth_simulated' and len(user['contraseña']) > 0
         has_other_link = other_links and other_links['total'] > 0
-        
+
         if not has_password and not has_other_link:
             flash('No puedes desvincular esta cuenta. Debes establecer una contraseña o vincular otro método de inicio de sesión primero.', 'error')
         else:
             conn.execute('DELETE FROM cuentas_vinculadas WHERE id_usuario = ? AND proveedor = ?', (session['user_id'], proveedor))
             conn.commit()
             flash(f'Cuenta de {proveedor.capitalize()} desvinculada exitosamente.', 'success')
-    except Exception as e:
+    except Exception:
         flash('Ocurrió un error al desvincular la cuenta.', 'error')
     finally:
         conn.close()
-        
+
     return redirect(url_for('perfil'))
-
-
-@app.route('/producto/<int:id>/review', methods=['POST'])
-def submit_review(id):
-    if 'user_id' not in session:
-        flash('Debes iniciar sesión para dejar una reseña.', 'error')
-        return redirect(url_for('login'))
-        
-    if not user_can_review(session.get('user_email'), id):
-        flash('Solo puedes calificar productos que hayas comprado y recibido.', 'error')
-        return redirect(url_for('producto', id=id))
-        
-    puntuacion = request.form.get('rating')
-    comentario = request.form.get('comment')
-    
-    if not puntuacion or not (1 <= int(puntuacion) <= 5):
-        flash('Por favor selecciona una puntuación válida (1-5 estrellas).', 'error')
-        return redirect(url_for('producto', id=id))
-        
-    conn = get_shared_db()
-    try:
-        existing = conn.execute(
-            'SELECT id_resena FROM reseñas WHERE id_usuario = ? AND id_producto = ? LIMIT 1',
-            (session['user_id'], id)
-        ).fetchone()
-        
-        if existing:
-            conn.execute(
-                'UPDATE reseñas SET puntuacion = ?, comentario = ?, fecha = CURRENT_TIMESTAMP WHERE id_resena = ?',
-                (int(puntuacion), comentario, existing['id_resena'])
-            )
-        else:
-            conn.execute(
-                'INSERT INTO reseñas (id_usuario, id_producto, puntuacion, comentario) VALUES (?, ?, ?, ?)',
-                (session['user_id'], id, int(puntuacion), comentario)
-            )
-        conn.commit()
-        flash('¡Gracias por tu reseña!', 'success')
-    except Exception as e:
-        flash('Ocurrió un error al guardar tu reseña.', 'error')
-    finally:
-        conn.close()
-        
-    return redirect(url_for('producto', id=id))
 
 
 @app.route('/mis-pedidos')
@@ -2002,8 +2008,4 @@ def mis_pedidos():
 
 
 if __name__ == '__main__':
-    app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=True
-    )
+    app.run(debug=True, port=5000)

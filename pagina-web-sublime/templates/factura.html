@@ -16,11 +16,12 @@
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px;">
         <div>
-            <h3 style="font-size: 0.9rem; color: #888; text-transform: uppercase; margin-bottom: 10px;">Enviar a:</h3>
-            <p style="margin: 0; font-weight: bold; font-size: 1.1rem;">{{ order.address }}</p>
+            <h3 style="font-size: 0.9rem; color: #888; text-transform: uppercase; margin-bottom: 10px;">Envío</h3>
+            <p style="margin: 0; font-weight: bold; font-size: 1rem;">{{ order.empresa_envio or 'No especificado' }}</p>
+            <p style="margin: 5px 0; color: #666; font-size: 0.85rem;">{{ order.address }}</p>
         </div>
         <div>
-            <h3 style="font-size: 0.9rem; color: #888; text-transform: uppercase; margin-bottom: 10px;">Método de Pago:</h3>
+            <h3 style="font-size: 0.9rem; color: #888; text-transform: uppercase; margin-bottom: 10px;">Método de Pago</h3>
             <p style="margin: 0; font-weight: bold;">{{ order.payment_method }}</p>
             <p style="margin: 5px 0; color: #666;">Ref: {{ order.reference }}</p>
         </div>
@@ -53,13 +54,14 @@
             <span>Subtotal:</span>
             <span>{{ format_price(order.total) }}</span>
         </div>
+        {% set shipping_cost = 5.00 if order.tipo_envio == 'destino' else 0 %}
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <span>Envío:</span>
-            <span>{{ format_price(5.00) }}</span>
+            <span>{{ format_price(shipping_cost) }}</span>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 1.5rem; font-weight: 900; border-top: 2px solid #00b350; padding-top: 15px; margin-top: 15px; background: linear-gradient(to right, #00b350, #00ff80); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
             <span>TOTAL:</span>
-            <span>{{ format_price(order.total + 5.00) }}</span>
+            <span>{{ format_price(order.total + shipping_cost) }}</span>
         </div>
     </div>
     

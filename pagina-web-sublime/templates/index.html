@@ -7,7 +7,7 @@
 {% block content %}
 <header class="hero">
     <div class="hero-slider">
-        <div class="hero-slide active" style="background-image: url('{{ url_for('static', filename='img/banner.png') }}');"></div>
+        <div class="hero-slide active" style="background-image: url('{{ url_for('static', filename='images/botella-agua-blanca-reutilizable_53876-145536.avif') }}');"></div>
         <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='images/pexels-cottonbro-5274535.jpg.jpeg') }}');"></div>
         <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='images/pexels-rdne-7842513.jpg.jpeg') }}');"></div>
         <div class="hero-slide" style="background-image: url('{{ url_for('static', filename='images/xuan-thu-le-2OXNxfTt3kQ-unsplash.jpg.jpeg') }}');"></div>
@@ -29,20 +29,40 @@
         <p class="section-subtitle">Explora nuestra amplia gama de productos listos para ser personalizados.</p>
     </div>
     <div class="category-grid">
-        <a href="{{ url_for('catalogo', categoria='Franela') }}" class="category-card tee-card" style="text-decoration: none; color: inherit; display: block;">
+        <a href="{{ url_for('catalogo', categoria='camisas') }}" class="category-card tee-card" style="text-decoration: none; color: inherit; display: block;">
             <i class="fa-solid fa-shirt fa-3x" style="margin-bottom: 15px;"></i>
-            <h3>FRANELAS</h3>
-            <p>50+ ARTÍCULOS</p>
+            <h3>CAMISAS</h3>
+            <p>COLECCIÓN</p>
         </a>
-        <a href="{{ url_for('catalogo', categoria='Sudadera') }}" class="category-card hoodie-card" style="text-decoration: none; color: inherit; display: block;">
-            <i class="fa-solid fa-user-ninja fa-3x" style="margin-bottom: 15px;"></i>
-            <h3>SUDADERAS</h3>
-            <p>30+ ARTÍCULOS</p>
-        </a>
-        <a href="{{ url_for('catalogo', categoria='Accesorio') }}" class="category-card accessory-card" style="text-decoration: none; color: inherit; display: block;">
+        <a href="{{ url_for('catalogo', categoria='tazas') }}" class="category-card hoodie-card" style="text-decoration: none; color: inherit; display: block;">
             <i class="fa-solid fa-mug-hot fa-3x" style="margin-bottom: 15px;"></i>
-            <h3>ACCESORIOS</h3>
-            <p>25+ ARTÍCULOS</p>
+            <h3>TAZAS</h3>
+            <p>COLECCIÓN</p>
+        </a>
+        <a href="{{ url_for('catalogo', categoria='gorras') }}" class="category-card accessory-card" style="text-decoration: none; color: inherit; display: block;">
+            <i class="fa-solid fa-graduation-cap fa-3x" style="margin-bottom: 15px;"></i>
+            <h3>GORRAS</h3>
+            <p>COLECCIÓN</p>
+        </a>
+        <a href="{{ url_for('catalogo', categoria='llaveros') }}" class="category-card custom-card" style="text-decoration: none; color: inherit; display: block;">
+            <i class="fa-solid fa-key fa-3x" style="margin-bottom: 15px;"></i>
+            <h3>LLAVEROS</h3>
+            <p>COLECCIÓN</p>
+        </a>
+        <a href="{{ url_for('catalogo', categoria='termos/filtros') }}" class="category-card tee-card" style="text-decoration: none; color: inherit; display: block;">
+            <i class="fa-solid fa-temperature-high fa-3x" style="margin-bottom: 15px;"></i>
+            <h3>TERMOS / FILTROS</h3>
+            <p>COLECCIÓN</p>
+        </a>
+        <a href="{{ url_for('catalogo', categoria='mousepads') }}" class="category-card hoodie-card" style="text-decoration: none; color: inherit; display: block;">
+            <i class="fa-solid fa-computer-mouse fa-3x" style="margin-bottom: 15px;"></i>
+            <h3>MOUSEPADS</h3>
+            <p>COLECCIÓN</p>
+        </a>
+        <a href="{{ url_for('catalogo', categoria='bolígrafos') }}" class="category-card accessory-card" style="text-decoration: none; color: inherit; display: block;">
+            <i class="fa-solid fa-pen fa-3x" style="margin-bottom: 15px;"></i>
+            <h3>BOLÍGRAFOS</h3>
+            <p>COLECCIÓN</p>
         </a>
         <a href="{{ url_for('personalizar') }}" class="category-card custom-card" style="text-decoration: none; color: inherit; display: block;">
             <i class="fa-solid fa-wand-magic-sparkles fa-3x" style="margin-bottom: 15px;"></i>

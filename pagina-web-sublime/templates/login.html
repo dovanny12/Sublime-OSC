@@ -57,11 +57,11 @@
         </div>
         
         <div class="social-buttons" style="display: flex; gap: 15px; margin-bottom: 25px;">
-            <a href="{{ url_for('login_google') }}" class="social-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; border-radius: 50px; background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.5px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <a href="#" onclick="openSocialPopup('{{ url_for('login_google') }}')" class="social-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; border-radius: 50px; background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.5px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
                 <i class="fa-brands fa-google" style="background: linear-gradient(135deg, #ea4335, #fbbc05, #34a853, #4285f4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.3rem;"></i> Google
             </a>
-            <a href="{{ url_for('login_facebook') }}" class="social-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; border-radius: 50px; background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.5px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                <i class="fa-brands fa-facebook-f" style="color: #1877f2; font-size: 1.3rem; text-shadow: 0 0 10px rgba(24, 119, 242, 0.4);"></i> Facebook
+            <a href="#" onclick="event.preventDefault(); alert('Facebook Login no está disponible actualmente. Usa Google o crea una cuenta.')" class="social-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; border-radius: 50px; background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.5px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <i class="fa-brands fa-facebook-f" style="color: #555; font-size: 1.3rem;"></i> Facebook <span style="font-size:0.65rem;color:#888;font-weight:400;">(no disp.)</span>
             </a>
         </div>
         
@@ -75,20 +75,21 @@
 
 
 <script>
+    function openSocialPopup(url) {
+        window.open(url, 'SocialLogin', 'width=500,height=600,scrollbars=yes');
+    }
+
     const togglePassword = document.querySelector('#togglePassword');
     const password = document.querySelector('#password');
     if (togglePassword && password) {
         togglePassword.addEventListener('click', function (e) {
-            // alternar el atributo de tipo
             const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
             password.setAttribute('type', type);
-            // alternar el icono de la barra inclinada
             this.classList.toggle('fa-eye');
             this.classList.toggle('fa-eye-slash');
         });
     }
 
-    // Validación ligera del formulario antes de enviar
     const formLogin = document.querySelector('#formLogin');
     const inputUsuario = document.querySelector('#usuario');
     const mensajeError = document.querySelector('#mensajeError');

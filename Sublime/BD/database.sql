@@ -9,7 +9,7 @@ PRAGMA foreign_keys = ON;
 -- ROLES
 -- =========================================================
 
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
     id_rol INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre VARCHAR(50) NOT NULL UNIQUE
 );
@@ -18,7 +18,7 @@ CREATE TABLE roles (
 -- USUARIOS
 -- =========================================================
 
-CREATE TABLE usuarios (
+CREATE TABLE IF NOT EXISTS usuarios (
     id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre VARCHAR(100) NOT NULL,
     correo VARCHAR(100) NOT NULL UNIQUE,
@@ -31,10 +31,27 @@ CREATE TABLE usuarios (
 );
 
 -- =========================================================
+-- CUENTAS VINCULADAS (Google / Facebook)
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS cuentas_vinculadas (
+    id_cuenta INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_usuario INTEGER NOT NULL,
+    proveedor VARCHAR(50) NOT NULL,
+    proveedor_id TEXT NOT NULL,
+    proveedor_correo VARCHAR(100),
+
+    FOREIGN KEY (id_usuario)
+    REFERENCES usuarios(id_usuario),
+
+    UNIQUE(proveedor, proveedor_id)
+);
+
+-- =========================================================
 -- SESIONES LOGIN
 -- =========================================================
 
-CREATE TABLE sesiones (
+CREATE TABLE IF NOT EXISTS sesiones (
     id_sesion INTEGER PRIMARY KEY AUTOINCREMENT,
     id_usuario INTEGER NOT NULL,
     token TEXT NOT NULL,
@@ -49,7 +66,7 @@ CREATE TABLE sesiones (
 -- CLIENTES
 -- =========================================================
 
-CREATE TABLE clientes (
+CREATE TABLE IF NOT EXISTS clientes (
     id_cliente INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre VARCHAR(100) NOT NULL,
     telefono VARCHAR(20),
@@ -64,7 +81,7 @@ CREATE TABLE clientes (
 -- DIRECCIONES CLIENTES
 -- =========================================================
 
-CREATE TABLE direcciones_cliente (
+CREATE TABLE IF NOT EXISTS direcciones_cliente (
     id_direccion INTEGER PRIMARY KEY AUTOINCREMENT,
     id_cliente INTEGER NOT NULL,
     direccion TEXT NOT NULL,
@@ -80,7 +97,7 @@ CREATE TABLE direcciones_cliente (
 -- PROVEEDORES
 -- =========================================================
 
-CREATE TABLE proveedores (
+CREATE TABLE IF NOT EXISTS proveedores (
     id_proveedor INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre VARCHAR(100) NOT NULL,
     contacto VARCHAR(100),
@@ -93,7 +110,7 @@ CREATE TABLE proveedores (
 -- CATEGORÍAS
 -- =========================================================
 
-CREATE TABLE categorias (
+CREATE TABLE IF NOT EXISTS categorias (
     id_categoria INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre VARCHAR(100) NOT NULL UNIQUE
 );
@@ -102,7 +119,7 @@ CREATE TABLE categorias (
 -- TASAS DE CAMBIO
 -- =========================================================
 
-CREATE TABLE tasas_cambio (
+CREATE TABLE IF NOT EXISTS tasas_cambio (
     id_tasa INTEGER PRIMARY KEY AUTOINCREMENT,
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
     tasa DECIMAL(12,4) NOT NULL,
@@ -114,7 +131,7 @@ CREATE TABLE tasas_cambio (
 -- PRODUCTOS
 -- =========================================================
 
-CREATE TABLE productos (
+CREATE TABLE IF NOT EXISTS productos (
     id_producto INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre VARCHAR(100) NOT NULL,
     descripcion TEXT,
@@ -132,7 +149,7 @@ CREATE TABLE productos (
 -- IMÁGENES PRODUCTOS
 -- =========================================================
 
-CREATE TABLE imagenes_productos (
+CREATE TABLE IF NOT EXISTS imagenes_productos (
     id_imagen INTEGER PRIMARY KEY AUTOINCREMENT,
     id_producto INTEGER NOT NULL,
     ruta_imagen TEXT NOT NULL,
@@ -145,7 +162,7 @@ CREATE TABLE imagenes_productos (
 -- INVENTARIO
 -- =========================================================
 
-CREATE TABLE inventario (
+CREATE TABLE IF NOT EXISTS inventario (
     id_inventario INTEGER PRIMARY KEY AUTOINCREMENT,
     id_producto INTEGER NOT NULL UNIQUE,
     stock_actual INTEGER DEFAULT 0,
@@ -159,7 +176,7 @@ CREATE TABLE inventario (
 -- MOVIMIENTOS INVENTARIO
 -- =========================================================
 
-CREATE TABLE movimientos_inventario (
+CREATE TABLE IF NOT EXISTS movimientos_inventario (
     id_movimiento INTEGER PRIMARY KEY AUTOINCREMENT,
     id_producto INTEGER NOT NULL,
     tipo VARCHAR(20) NOT NULL,
@@ -175,7 +192,7 @@ CREATE TABLE movimientos_inventario (
 -- ALERTAS
 -- =========================================================
 
-CREATE TABLE alertas (
+CREATE TABLE IF NOT EXISTS alertas (
     id_alerta INTEGER PRIMARY KEY AUTOINCREMENT,
     id_producto INTEGER NOT NULL,
     mensaje TEXT NOT NULL,
@@ -189,7 +206,7 @@ CREATE TABLE alertas (
 -- FAVORITOS
 -- =========================================================
 
-CREATE TABLE favoritos (
+CREATE TABLE IF NOT EXISTS favoritos (
     id_favorito INTEGER PRIMARY KEY AUTOINCREMENT,
     id_cliente INTEGER NOT NULL,
     id_producto INTEGER NOT NULL,
@@ -205,7 +222,7 @@ CREATE TABLE favoritos (
 -- CARRITO
 -- =========================================================
 
-CREATE TABLE carrito (
+CREATE TABLE IF NOT EXISTS carrito (
     id_carrito INTEGER PRIMARY KEY AUTOINCREMENT,
     id_cliente INTEGER NOT NULL,
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -218,7 +235,7 @@ CREATE TABLE carrito (
 -- DETALLE CARRITO
 -- =========================================================
 
-CREATE TABLE detalle_carrito (
+CREATE TABLE IF NOT EXISTS detalle_carrito (
     id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
     id_carrito INTEGER NOT NULL,
     id_producto INTEGER NOT NULL,
@@ -236,7 +253,7 @@ CREATE TABLE detalle_carrito (
 -- PERSONALIZACIÓN CARRITO
 -- =========================================================
 
-CREATE TABLE personalizacion_carrito (
+CREATE TABLE IF NOT EXISTS personalizacion_carrito (
     id_personalizacion INTEGER PRIMARY KEY AUTOINCREMENT,
     id_detalle_carrito INTEGER NOT NULL,
     descripcion TEXT,
@@ -249,7 +266,7 @@ CREATE TABLE personalizacion_carrito (
 -- IMÁGENES PERSONALIZACIÓN CARRITO
 -- =========================================================
 
-CREATE TABLE imagenes_personalizacion_carrito (
+CREATE TABLE IF NOT EXISTS imagenes_personalizacion_carrito (
     id_imagen INTEGER PRIMARY KEY AUTOINCREMENT,
     id_personalizacion INTEGER NOT NULL,
     ruta_imagen TEXT NOT NULL,
@@ -262,7 +279,7 @@ CREATE TABLE imagenes_personalizacion_carrito (
 -- TEXTOS PERSONALIZACIÓN CARRITO
 -- =========================================================
 
-CREATE TABLE textos_personalizacion_carrito (
+CREATE TABLE IF NOT EXISTS textos_personalizacion_carrito (
     id_texto INTEGER PRIMARY KEY AUTOINCREMENT,
     id_personalizacion INTEGER NOT NULL,
     texto TEXT,
@@ -275,7 +292,7 @@ CREATE TABLE textos_personalizacion_carrito (
 -- ESTADOS PEDIDOS
 -- =========================================================
 
-CREATE TABLE estados_pedido (
+CREATE TABLE IF NOT EXISTS estados_pedido (
     id_estado INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre VARCHAR(50) NOT NULL UNIQUE
 );
@@ -284,7 +301,7 @@ CREATE TABLE estados_pedido (
 -- PEDIDOS
 -- =========================================================
 
-CREATE TABLE pedidos (
+CREATE TABLE IF NOT EXISTS pedidos (
     id_pedido INTEGER PRIMARY KEY AUTOINCREMENT,
     id_cliente INTEGER NOT NULL,
     id_estado INTEGER NOT NULL,
@@ -302,7 +319,7 @@ CREATE TABLE pedidos (
 -- DETALLE PEDIDOS
 -- =========================================================
 
-CREATE TABLE detalle_pedidos (
+CREATE TABLE IF NOT EXISTS detalle_pedidos (
     id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
     id_pedido INTEGER NOT NULL,
     id_producto INTEGER NOT NULL,
@@ -320,7 +337,7 @@ CREATE TABLE detalle_pedidos (
 -- PERSONALIZACIONES
 -- =========================================================
 
-CREATE TABLE personalizaciones (
+CREATE TABLE IF NOT EXISTS personalizaciones (
     id_personalizacion INTEGER PRIMARY KEY AUTOINCREMENT,
     id_detalle_pedido INTEGER NOT NULL,
     descripcion TEXT,
@@ -333,7 +350,7 @@ CREATE TABLE personalizaciones (
 -- IMÁGENES PERSONALIZACIÓN
 -- =========================================================
 
-CREATE TABLE imagenes_personalizacion (
+CREATE TABLE IF NOT EXISTS imagenes_personalizacion (
     id_imagen INTEGER PRIMARY KEY AUTOINCREMENT,
     id_personalizacion INTEGER NOT NULL,
     ruta_imagen TEXT NOT NULL,
@@ -346,7 +363,7 @@ CREATE TABLE imagenes_personalizacion (
 -- TEXTOS PERSONALIZACIÓN
 -- =========================================================
 
-CREATE TABLE textos_personalizacion (
+CREATE TABLE IF NOT EXISTS textos_personalizacion (
     id_texto INTEGER PRIMARY KEY AUTOINCREMENT,
     id_personalizacion INTEGER NOT NULL,
     texto TEXT,
@@ -359,7 +376,7 @@ CREATE TABLE textos_personalizacion (
 -- ENVÍOS
 -- =========================================================
 
-CREATE TABLE envios (
+CREATE TABLE IF NOT EXISTS envios (
     id_envio INTEGER PRIMARY KEY AUTOINCREMENT,
     id_pedido INTEGER NOT NULL,
     direccion_envio TEXT,
@@ -376,7 +393,7 @@ CREATE TABLE envios (
 -- VENTAS
 -- =========================================================
 
-CREATE TABLE ventas (
+CREATE TABLE IF NOT EXISTS ventas (
     id_venta INTEGER PRIMARY KEY AUTOINCREMENT,
     id_cliente INTEGER NOT NULL,
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -390,7 +407,7 @@ CREATE TABLE ventas (
 -- DETALLE VENTAS
 -- =========================================================
 
-CREATE TABLE detalle_ventas (
+CREATE TABLE IF NOT EXISTS detalle_ventas (
     id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
     id_venta INTEGER NOT NULL,
     id_producto INTEGER NOT NULL,
@@ -408,7 +425,7 @@ CREATE TABLE detalle_ventas (
 -- MÉTODOS PAGO
 -- =========================================================
 
-CREATE TABLE metodos_pago (
+CREATE TABLE IF NOT EXISTS metodos_pago (
     id_metodo_pago INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre VARCHAR(50) NOT NULL UNIQUE
 );
@@ -417,7 +434,7 @@ CREATE TABLE metodos_pago (
 -- PAGOS VENTA
 -- =========================================================
 
-CREATE TABLE pagos_venta (
+CREATE TABLE IF NOT EXISTS pagos_venta (
     id_pago INTEGER PRIMARY KEY AUTOINCREMENT,
     id_venta INTEGER NOT NULL,
     id_metodo_pago INTEGER NOT NULL,
@@ -435,7 +452,7 @@ CREATE TABLE pagos_venta (
 -- VERIFICACIÓN PAGOS
 -- =========================================================
 
-CREATE TABLE verificaciones_pago (
+CREATE TABLE IF NOT EXISTS verificaciones_pago (
     id_verificacion INTEGER PRIMARY KEY AUTOINCREMENT,
     id_pago INTEGER NOT NULL,
     comprobante TEXT,
@@ -450,7 +467,7 @@ CREATE TABLE verificaciones_pago (
 -- FACTURAS
 -- =========================================================
 
-CREATE TABLE facturas (
+CREATE TABLE IF NOT EXISTS facturas (
     id_factura INTEGER PRIMARY KEY AUTOINCREMENT,
 
     id_venta INTEGER NOT NULL UNIQUE,
@@ -482,7 +499,7 @@ CREATE TABLE facturas (
 -- COMPRAS
 -- =========================================================
 
-CREATE TABLE compras (
+CREATE TABLE IF NOT EXISTS compras (
     id_compra INTEGER PRIMARY KEY AUTOINCREMENT,
     id_proveedor INTEGER NOT NULL,
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -496,7 +513,7 @@ CREATE TABLE compras (
 -- DETALLE COMPRAS
 -- =========================================================
 
-CREATE TABLE detalle_compras (
+CREATE TABLE IF NOT EXISTS detalle_compras (
     id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
     id_compra INTEGER NOT NULL,
     id_producto INTEGER NOT NULL,
@@ -514,7 +531,7 @@ CREATE TABLE detalle_compras (
 -- CUPONES
 -- =========================================================
 
-CREATE TABLE cupones (
+CREATE TABLE IF NOT EXISTS cupones (
     id_cupon INTEGER PRIMARY KEY AUTOINCREMENT,
     codigo VARCHAR(50) UNIQUE,
     descuento DECIMAL(10,2),
@@ -526,7 +543,7 @@ CREATE TABLE cupones (
 -- RESEÑAS
 -- =========================================================
 
-CREATE TABLE reseñas (
+CREATE TABLE IF NOT EXISTS reseñas (
     id_reseña INTEGER PRIMARY KEY AUTOINCREMENT,
     id_cliente INTEGER NOT NULL,
     id_producto INTEGER NOT NULL,
@@ -545,7 +562,7 @@ CREATE TABLE reseñas (
 -- NOTIFICACIONES
 -- =========================================================
 
-CREATE TABLE notificaciones (
+CREATE TABLE IF NOT EXISTS notificaciones (
     id_notificacion INTEGER PRIMARY KEY AUTOINCREMENT,
     id_cliente INTEGER NOT NULL,
     mensaje TEXT,
@@ -560,7 +577,7 @@ CREATE TABLE notificaciones (
 -- CAJA
 -- =========================================================
 
-CREATE TABLE caja (
+CREATE TABLE IF NOT EXISTS caja (
     id_movimiento INTEGER PRIMARY KEY AUTOINCREMENT,
     tipo VARCHAR(20),
     monto DECIMAL(10,2),
@@ -572,19 +589,7 @@ CREATE TABLE caja (
 -- SERVICIOS DE PERSONALIZACIÓN
 -- =========================================================
 
-CREATE TABLE servicios_personalizacion (
-    id_servicio INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT,
-    precio_usd DECIMAL(10,2) NOT NULL,
-    activo INTEGER DEFAULT 1
-);
-
--- =========================================================
--- SERVICIOS DE PERSONALIZACIÓN
--- =========================================================
-
-CREATE TABLE servicios_personalizacion (
+CREATE TABLE IF NOT EXISTS servicios_personalizacion (
     id_servicio INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre VARCHAR(100) NOT NULL,
     descripcion TEXT,
@@ -596,7 +601,7 @@ CREATE TABLE servicios_personalizacion (
 -- DETALLE PERSONALIZACIÓN
 -- =========================================================
 
-CREATE TABLE detalle_personalizacion (
+CREATE TABLE IF NOT EXISTS detalle_personalizacion (
     id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
 
     id_personalizacion INTEGER NOT NULL,
@@ -620,27 +625,7 @@ CREATE TABLE detalle_personalizacion (
 -- DETALLE DISEÑO
 -- =========================================================
 
-CREATE TABLE detalle_diseno (
-    id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    id_personalizacion INTEGER NOT NULL,
-
-    id_diseno INTEGER NOT NULL,
-
-    precio DECIMAL(10,2),
-
-    FOREIGN KEY (id_personalizacion)
-    REFERENCES personalizaciones(id_personalizacion),
-
-    FOREIGN KEY (id_diseno)
-    REFERENCES servicios_diseno(id_diseno)
-);
-
--- =========================================================
--- DETALLE DISEÑO
--- =========================================================
-
-CREATE TABLE detalle_diseno (
+CREATE TABLE IF NOT EXISTS detalle_diseno (
     id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
 
     id_personalizacion INTEGER NOT NULL,
@@ -660,7 +645,7 @@ CREATE TABLE detalle_diseno (
 -- CONFIGURACIÓN GENERAL
 -- =========================================================
 
-CREATE TABLE configuracion (
+CREATE TABLE IF NOT EXISTS configuracion (
     id_configuracion INTEGER PRIMARY KEY AUTOINCREMENT,
 
     iva_default DECIMAL(5,2) DEFAULT 16,
@@ -678,6 +663,7 @@ CREATE TABLE configuracion (
 -- EVITAR STOCK NEGATIVO
 -- =========================================================
 
+DROP TRIGGER IF EXISTS evitar_stock_negativo;
 CREATE TRIGGER evitar_stock_negativo
 BEFORE INSERT ON detalle_ventas
 FOR EACH ROW
@@ -699,6 +685,7 @@ END;
 -- DESCONTAR STOCK VENTA
 -- =========================================================
 
+DROP TRIGGER IF EXISTS disminuir_stock_venta;
 CREATE TRIGGER disminuir_stock_venta
 AFTER INSERT ON detalle_ventas
 FOR EACH ROW
@@ -727,6 +714,7 @@ END;
 -- AUMENTAR STOCK COMPRA
 -- =========================================================
 
+DROP TRIGGER IF EXISTS aumentar_stock_compra;
 CREATE TRIGGER aumentar_stock_compra
 AFTER INSERT ON detalle_compras
 FOR EACH ROW
@@ -755,6 +743,7 @@ END;
 -- ALERTA STOCK BAJO
 -- =========================================================
 
+DROP TRIGGER IF EXISTS alerta_stock_bajo;
 CREATE TRIGGER alerta_stock_bajo
 AFTER UPDATE ON inventario
 FOR EACH ROW

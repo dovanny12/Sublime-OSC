@@ -1,87 +1,383 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="page-header" style="text-align: center; margin: 3rem 0;">
-    <h1 class="hero-title-solid" style="font-size: 3rem;">CHECKOUT</h1>
+<div class="page-header" style="text-align: center; margin: 2rem 0;">
+    <h1 class="hero-title-solid" style="font-size: 2.5rem;">CHECKOUT</h1>
 </div>
 
 <div class="checkout-container" style="display: flex; gap: 40px; max-width: 1000px; margin: 0 auto; padding-bottom: 50px;">
-    
+
     <div class="checkout-form" style="flex: 2; background: var(--card-bg); padding: 30px; border-radius: 15px; border: 1px solid var(--border-color);">
-        <h2 style="margin-bottom: 20px;">Dirección y Envío</h2>
-        <form action="{{ url_for('checkout') }}" method="POST">
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 10px;">Nombre Completo</label>
-                <input type="text" name="name" required style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 5px;">
-            </div>
-            
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 10px;">Dirección de Envío Completa</label>
-                <textarea name="address" required rows="3" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 5px;"></textarea>
+
+        <!-- Step indicators -->
+        <div class="step-indicators" style="display: flex; gap: 8px; margin-bottom: 28px; justify-content: center;">
+            <div class="step-dot active" data-step="1" style="width: 32px; height: 4px; border-radius: 2px; background: #00b350; transition: background 0.3s;"></div>
+            <div class="step-dot" data-step="2" style="width: 32px; height: 4px; border-radius: 2px; background: var(--border-color); transition: background 0.3s;"></div>
+        </div>
+
+        <form id="checkoutForm" action="{{ url_for('checkout') }}" method="POST">
+
+            <!-- ═══════════ STEP 1: TIPO DE ENVÍO ═══════════ -->
+            <div class="checkout-step" id="step1">
+                <h2 style="margin-bottom: 20px; font-size: 1.3rem;">1. ¿Cómo quieres recibir tu pedido?</h2>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem;">Nombre Completo</label>
+                    <input type="text" name="name" required value="{{ session.get('username', '') }}" placeholder="Tu nombre y apellido" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; font-size: 0.9rem;">
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem;">Teléfono</label>
+                        <input type="tel" name="telefono" required placeholder="0412-1234567" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; font-size: 0.9rem;">
+                    </div>
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem;">Cédula de Identidad</label>
+                        <input type="text" name="cedula" required placeholder="V-12345678" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; font-size: 0.9rem;">
+                    </div>
+                </div>
+
+                <div class="shipping-options" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+
+                    <label class="shipping-card" data-value="destino" style="display: block; padding: 16px 18px; background: var(--bg-color); border: 2px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <input type="radio" name="shipping_method" value="destino" required style="width: 18px; height: 18px; accent-color: #00b350; flex-shrink: 0;">
+                            <div>
+                                <strong style="font-size: 0.95rem;">Cobro a Destino</strong>
+                                <p style="margin: 3px 0 0; font-size: 0.8rem; color: var(--text-muted);">Recibe en la puerta de tu casa — pago contra entrega</p>
+                            </div>
+                        </div>
+                    </label>
+
+                    <label class="shipping-card" data-value="tienda" style="display: block; padding: 16px 18px; background: var(--bg-color); border: 2px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <input type="radio" name="shipping_method" value="tienda" style="width: 18px; height: 18px; accent-color: #00b350; flex-shrink: 0;">
+                            <div>
+                                <strong style="font-size: 0.95rem;">Retiro en Tienda</strong>
+                                <p style="margin: 3px 0 0; font-size: 0.8rem; color: var(--text-muted);">Pasa por nuestra tienda y retira sin costo adicional</p>
+                            </div>
+                        </div>
+                    </label>
+
+                    <label class="shipping-card" data-value="agencia" style="display: block; padding: 16px 18px; background: var(--bg-color); border: 2px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <input type="radio" name="shipping_method" value="agencia" style="width: 18px; height: 18px; accent-color: #00b350; flex-shrink: 0;">
+                            <div>
+                                <strong style="font-size: 0.95rem;">Retirar en Agencia</strong>
+                                <p style="margin: 3px 0 0; font-size: 0.8rem; color: var(--text-muted);">Recoge en la agencia de ZOOM o MRW más cercana</p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Conditional fields -->
+                <div id="shippingAgencyGroup" style="display: none; margin-bottom: 20px; padding: 18px; background: rgba(0,179,80,0.06); border-radius: 12px; border: 1px solid rgba(0,179,80,0.2);">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem;">Selecciona la agencia</label>
+                        <select name="empresa_envio" id="empresaEnvio" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; font-size: 0.9rem;">
+                            <option value="">Selecciona una opción...</option>
+                            <option value="ZOOM">ZOOM</option>
+                            <option value="MRW">MRW</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem;">Dirección de la Agencia:</label>
+                        <input type="text" name="codigo_agencia" id="codigoAgencia" placeholder="Ej: Agencia Caja de Agua (Calle Manuelita Sáenz, Sector Caja de Agua)" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; font-size: 0.9rem;">
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem;">Ciudad</label>
+                            <input type="text" name="ciudad" id="ciudadField" placeholder="Ej: Caracas" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; font-size: 0.9rem;">
+                        </div>
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem;">Estado</label>
+                            <input type="text" name="estado" id="estadoField" placeholder="Ej: Distrito Capital" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; font-size: 0.9rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="storePickupInfo" style="display: none; margin-bottom: 20px; padding: 18px; background: rgba(0,179,80,0.06); border-radius: 12px; border: 1px solid rgba(0,179,80,0.2);">
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">
+                        <i class="fa-solid fa-store" style="color: #00b350; margin-right: 8px;"></i>
+                        Dirección de la tienda: <strong>Av. Principal, Local 5, Centro Comercial La Cascada, Caracas</strong>
+                    </p>
+                    <p style="margin: 8px 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                        <i class="fa-solid fa-clock" style="color: #00b350; margin-right: 8px;"></i>
+                        Horario: Lun - Sáb 9:00 AM - 6:00 PM
+                    </p>
+                </div>
+
+                <button type="button" class="btn-primary" id="toStep2" style="width: 100%; margin-top: 10px;" disabled>
+                    SIGUIENTE <i class="fa-solid fa-arrow-right"></i>
+                </button>
             </div>
 
-            <h2 style="margin: 30px 0 20px 0;">Método de Pago</h2>
-            <div class="payment-methods" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
-                <label style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer;">
-                    <input type="radio" name="payment_method" value="Transferencia" required onchange="togglePaymentDetails('transferencia')">
-                    <span><i class="fa-solid fa-building-columns"></i> Transferencia Bancaria</span>
-                </label>
-                
-                <label style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer;">
-                    <input type="radio" name="payment_method" value="Pago Móvil" onchange="togglePaymentDetails('pagomovil')">
-                    <span><i class="fa-solid fa-mobile-screen"></i> Pago Móvil</span>
-                </label>
-                
-                <label style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer;">
-                    <input type="radio" name="payment_method" value="Binance" onchange="togglePaymentDetails('binance')">
-                    <span><i class="fa-solid fa-coins"></i> Binance (USDT)</span>
-                </label>
+            <!-- ═══════════ STEP 2: MÉTODO DE PAGO ═══════════ -->
+            <div class="checkout-step" id="step2" style="display: none;">
+                <h2 style="margin-bottom: 20px; font-size: 1.3rem;">2. Método de Pago</h2>
+
+                <div class="payment-methods" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                    <label style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--bg-color); border: 2px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                        <input type="radio" name="payment_method" value="Transferencia" required onchange="togglePaymentDetails('transferencia')">
+                        <span><i class="fa-solid fa-building-columns" style="color: #00b350;"></i> Transferencia Bancaria</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--bg-color); border: 2px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                        <input type="radio" name="payment_method" value="Pago Móvil" onchange="togglePaymentDetails('pagomovil')">
+                        <span><i class="fa-solid fa-mobile-screen" style="color: #00b350;"></i> Pago Móvil</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--bg-color); border: 2px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                        <input type="radio" name="payment_method" value="Binance" onchange="togglePaymentDetails('binance')">
+                        <span><i class="fa-solid fa-coins" style="color: #00b350;"></i> Binance (USDT)</span>
+                    </label>
+                </div>
+
+                <div id="transferencia-details" class="payment-info" style="display: none; padding: 18px; background: rgba(0, 179, 80, 0.08); border: 1px solid rgba(0,179,80,0.25); border-radius: 10px; margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 8px; font-size: 0.9rem;">Datos de Transferencia:</h4>
+                    <p style="font-size: 0.85rem; margin: 4px 0;">Banco: Banesco</p>
+                    <p style="font-size: 0.85rem; margin: 4px 0;">Cuenta: 0134-XXXX-XXXX-XXXX-XXXX</p>
+                    <p style="font-size: 0.85rem; margin: 4px 0;">Nombre: Sublime's C.A.</p>
+                    <p style="font-size: 0.85rem; margin: 4px 0;">RIF: J-12345678-9</p>
+                </div>
+
+                <div id="pagomovil-details" class="payment-info" style="display: none; padding: 18px; background: rgba(0, 179, 80, 0.08); border: 1px solid rgba(0,179,80,0.25); border-radius: 10px; margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 8px; font-size: 0.9rem;">Datos de Pago Móvil:</h4>
+                    <p style="font-size: 0.85rem; margin: 4px 0;">Banco: Banesco (0134)</p>
+                    <p style="font-size: 0.85rem; margin: 4px 0;">Teléfono: 0412-XXX-XXXX</p>
+                    <p style="font-size: 0.85rem; margin: 4px 0;">Cédula: V-XX.XXX.XXX</p>
+                </div>
+
+                <div id="binance-details" class="payment-info" style="display: none; padding: 18px; background: rgba(0, 179, 80, 0.08); border: 1px solid rgba(0,179,80,0.25); border-radius: 10px; margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 8px; font-size: 0.9rem;">Datos de Binance:</h4>
+                    <p style="font-size: 0.85rem; margin: 4px 0;">Red: BEP20</p>
+                    <p style="font-size: 0.85rem; margin: 4px 0;">Billetera: 0x71C7656EC7ab88b098defB751B7401B5f6d8976F</p>
+                    <p style="font-size: 0.85rem; margin: 4px 0;">Binance ID: 123456789</p>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem;">Referencia de Pago</label>
+                    <input type="text" name="reference" required placeholder="Nro de confirmación de la transferencia / pago" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; font-size: 0.9rem;">
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" class="btn-secondary" id="backToStep1" style="flex: 1; padding: 14px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); border-radius: 12px; font-weight: 700; cursor: pointer;">
+                        <i class="fa-solid fa-arrow-left"></i> ATRÁS
+                    </button>
+                    <button type="submit" class="btn-primary" style="flex: 2; padding: 14px;">
+                        FINALIZAR COMPRA <i class="fa-solid fa-check"></i>
+                    </button>
+                </div>
             </div>
 
-            <div id="transferencia-details" class="payment-info" style="display: none; padding: 20px; background: rgba(0, 179, 80, 0.1); border: 1px solid var(--primary-grad); border-radius: 8px; margin-bottom: 20px;">
-                <h4 style="margin-bottom: 10px;">Datos de Transferencia:</h4>
-                <p>Banco: Banesco</p>
-                <p>Cuenta: 0134-XXXX-XXXX-XXXX-XXXX</p>
-                <p>Nombre: Sublime's C.A.</p>
-                <p>RIF: J-12345678-9</p>
-            </div>
-
-            <div id="pagomovil-details" class="payment-info" style="display: none; padding: 20px; background: rgba(0, 179, 80, 0.1); border: 1px solid var(--primary-grad); border-radius: 8px; margin-bottom: 20px;">
-                <h4 style="margin-bottom: 10px;">Datos de Pago Móvil:</h4>
-                <p>Banco: Banesco (0134)</p>
-                <p>Teléfono: 0412-XXX-XXXX</p>
-                <p>Cédula: V-XX.XXX.XXX</p>
-            </div>
-
-            <div id="binance-details" class="payment-info" style="display: none; padding: 20px; background: rgba(0, 179, 80, 0.1); border: 1px solid var(--primary-grad); border-radius: 8px; margin-bottom: 20px;">
-                <h4 style="margin-bottom: 10px;">Datos de Binance:</h4>
-                <p>Red: BEP20 </p>
-                <p>Billetera: 0x71C7656EC7ab88b098defB751B7401B5f6d8976F</p>
-                <p>Binance ID: 123456789</p>
-            </div>
-
-            <div class="form-group" style="margin-top: 20px;">
-                <label style="display: block; margin-bottom: 10px;">Referencia de Pago</label>
-                <input type="text" name="reference" required placeholder="Nro de confirmación" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 5px;">
-            </div>
-            
-            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 20px;">FINALIZAR COMPRA</button>
         </form>
     </div>
 
-    <script>
-    function togglePaymentDetails(method) {
-        document.querySelectorAll('.payment-info').forEach(el => el.style.display = 'none');
-        document.getElementById(method + '-details').style.display = 'block';
-    }
-    </script>
-    
-    <div class="checkout-summary" style="flex: 1; background: var(--card-bg); padding: 30px; border-radius: 15px; border: 1px solid var(--border-color); height: fit-content;">
-        <h2 style="margin-bottom: 20px; color: var(--primary-grad);">Resumen</h2>
-        <p style="display: flex; justify-content: space-between;"><span>Subtotal:</span> <span>{{ format_price(total) }}</span></p>
-        <p style="display: flex; justify-content: space-between;"><span>Envío:</span> <span>{{ format_price(5.00) }}</span></p>
+    <!-- ═══════════ SIDEBAR: RESUMEN ═══════════ -->
+    <div class="checkout-summary" style="flex: 1; background: var(--card-bg); padding: 28px; border-radius: 15px; border: 1px solid var(--border-color); height: fit-content; position: sticky; top: 100px;">
+        <h2 style="margin-bottom: 20px; color: #00ff80; font-size: 1rem; letter-spacing: 0.1em;">RESUMEN</h2>
+        <p style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+            <span>Subtotal</span>
+            <span>{{ format_price(total) }}</span>
+        </p>
+        <p style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+            <span>Envío</span>
+            <span id="summaryShipping">{{ format_price(0) }}</span>
+        </p>
         <hr style="border-color: var(--border-color); margin: 15px 0;">
-        <h3 style="display: flex; justify-content: space-between; color: var(--primary-grad);"><span>TOTAL:</span> <span>{{ format_price(total + 5.00) }}</span></h3>
+        <h3 style="display: flex; justify-content: space-between; color: #00ff80; margin: 0;">
+            <span>TOTAL</span>
+            <span id="summaryTotal">{{ format_price(total) }}</span>
+        </h3>
+
+        <div id="summaryShippingDetail" style="margin-top: 18px; padding: 14px; background: rgba(0,179,80,0.06); border-radius: 10px; font-size: 0.82rem; display: none;">
+            <p style="margin: 0 0 6px;"><strong>Envío:</strong> <span id="summaryMethod"></span></p>
+            <p style="margin: 0;" id="summaryAddress"></p>
+        </div>
     </div>
 </div>
+
+<script>
+function togglePaymentDetails(method) {
+    document.querySelectorAll('.payment-info').forEach(el => el.style.display = 'none');
+    document.getElementById(method + '-details').style.display = 'block';
+}
+
+// ── Multi-step logic ──
+(function() {
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const dots = document.querySelectorAll('.step-dot');
+    const toStep2Btn = document.getElementById('toStep2');
+    const backBtn = document.getElementById('backToStep1');
+    const shippingRadios = document.querySelectorAll('input[name="shipping_method"]');
+    const agencyGroup = document.getElementById('shippingAgencyGroup');
+    const storeInfo = document.getElementById('storePickupInfo');
+    const shippingSelect = document.getElementById('empresaEnvio');
+    const codigoAgencia = document.getElementById('codigoAgencia');
+    const ciudadField = document.getElementById('ciudadField');
+    const estadoField = document.getElementById('estadoField');
+    const summaryMethod = document.getElementById('summaryMethod');
+    const summaryAddress = document.getElementById('summaryAddress');
+    const summaryDetail = document.getElementById('summaryShippingDetail');
+    const summaryShipping = document.getElementById('summaryShipping');
+    const summaryTotal = document.getElementById('summaryTotal');
+    const baseTotal = {{ total }};
+    const shippingCost = 5.00;
+
+    function formatPrice(amount) {
+        return '$' + Number(amount).toFixed(2);
+    }
+
+    function getAgencyLocation() {
+        const cod = codigoAgencia.value.trim();
+        const cd = ciudadField.value.trim();
+        const ed = estadoField.value.trim();
+        const parts = [];
+        if (cod) parts.push('Cód: ' + cod);
+        if (cd) parts.push(cd);
+        if (ed) parts.push(ed);
+        return parts.join(', ') || '(pendiente)';
+    }
+
+    function updateSummary() {
+        const selected = document.querySelector('input[name="shipping_method"]:checked');
+        if (!selected) {
+            summaryDetail.style.display = 'none';
+            summaryShipping.textContent = formatPrice(0);
+            summaryTotal.textContent = formatPrice(baseTotal);
+            return;
+        }
+        const val = selected.value;
+        const envio = shippingSelect.value;
+        let label = '', addr = '', cost = 0;
+
+        if (val === 'destino') {
+            label = 'Cobro a Destino — ' + (envio || '?');
+            addr = getAgencyLocation();
+            cost = shippingCost;
+            summaryDetail.style.display = 'block';
+        } else if (val === 'tienda') {
+            label = 'Retiro en Tienda';
+            addr = 'Av. Principal, Local 5, CC La Cascada, Caracas';
+            cost = 0;
+            summaryDetail.style.display = 'block';
+        } else if (val === 'agencia') {
+            label = 'Retirar en Agencia — ' + (envio || '?');
+            addr = getAgencyLocation();
+            cost = 0;
+            summaryDetail.style.display = 'block';
+        }
+
+        summaryMethod.textContent = label;
+        summaryAddress.textContent = addr;
+        summaryShipping.textContent = formatPrice(cost);
+        summaryTotal.textContent = formatPrice(baseTotal + cost);
+    }
+
+    function validateStep1() {
+        const selected = document.querySelector('input[name="shipping_method"]:checked');
+        if (!selected) { toStep2Btn.disabled = true; return; }
+        const val = selected.value;
+        if (val === 'destino' || val === 'agencia') {
+            toStep2Btn.disabled = !(shippingSelect.value && codigoAgencia.value.trim() && ciudadField.value.trim() && estadoField.value.trim());
+        } else {
+            toStep2Btn.disabled = false;
+        }
+    }
+
+    function showStep(step) {
+        step1.style.display = step === 1 ? 'block' : 'none';
+        step2.style.display = step === 2 ? 'block' : 'none';
+        dots.forEach(d => d.style.background = parseInt(d.dataset.step) <= step ? '#00b350' : 'var(--border-color)');
+    }
+
+    // Shipping radio change
+    shippingRadios.forEach(r => r.addEventListener('change', function() {
+        document.querySelectorAll('.shipping-card').forEach(c => c.style.borderColor = 'var(--border-color)');
+        this.closest('.shipping-card').style.borderColor = '#00b350';
+        const val = this.value;
+        agencyGroup.style.display = (val === 'destino' || val === 'agencia') ? 'block' : 'none';
+        storeInfo.style.display = val === 'tienda' ? 'block' : 'none';
+        // Reset placeholder when switching
+        if (val === 'agencia' && shippingSelect.value) {
+            shippingSelect.dispatchEvent(new Event('change'));
+        } else if (val === 'destino' && shippingSelect.value) {
+            shippingSelect.dispatchEvent(new Event('change'));
+        } else {
+            codigoAgencia.placeholder = 'Escribe la dirección de la agencia...';
+        }
+        if (val === 'tienda') {
+            shippingSelect.value = '';
+            codigoAgencia.value = '';
+            ciudadField.value = '';
+            estadoField.value = '';
+        }
+        validateStep1();
+        updateSummary();
+    }));
+
+    // Agency / fields change
+    shippingSelect.addEventListener('change', function() {
+        const val = shippingSelect.value;
+        if (val === 'ZOOM') {
+            codigoAgencia.placeholder = 'Ej: Aliado ZOOM FCG 26, C.A. (Calle Argentina, esquina Calle Garcés, Centro)';
+        } else if (val === 'MRW') {
+            codigoAgencia.placeholder = 'Ej: Agencia Caja de Agua (Calle Manuelita Sáenz, Sector Caja de Agua)';
+        } else {
+            codigoAgencia.placeholder = 'Escribe la dirección de la agencia...';
+        }
+        validateStep1();
+        updateSummary();
+    });
+    codigoAgencia.addEventListener('input', function() { validateStep1(); updateSummary(); });
+    ciudadField.addEventListener('input', function() { validateStep1(); updateSummary(); });
+    estadoField.addEventListener('input', function() { validateStep1(); updateSummary(); });
+
+    // Step navigation
+    toStep2Btn.addEventListener('click', function() {
+        if (this.disabled) return;
+        showStep(2);
+        // Send selected method name as additional info
+        const sel = document.querySelector('input[name="shipping_method"]:checked').value;
+        let methodName = '';
+        if (sel === 'destino') methodName = 'Cobro a Destino';
+        else if (sel === 'tienda') methodName = 'Retiro en Tienda';
+        else methodName = 'Retirar en Agencia';
+        summaryMethod.textContent = methodName;
+    });
+
+    backBtn.addEventListener('click', function() { showStep(1); });
+
+    // Initialize summary
+    updateSummary();
+
+    // Also update step indicator style on mount if step 2 visible
+    // (handled by showStep)
+})();
+</script>
+
+<style>
+.shipping-card:hover {
+    border-color: rgba(0,179,80,0.5) !important;
+}
+.shipping-card:has(input:checked) {
+    border-color: #00b350 !important;
+    background: rgba(0,179,80,0.06) !important;
+}
+.payment-methods label:has(input:checked) {
+    border-color: #00b350 !important;
+    background: rgba(0,179,80,0.06) !important;
+}
+#toStep2:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+@media (max-width: 768px) {
+    .checkout-container { flex-direction: column; }
+    .checkout-summary { position: relative !important; top: 0 !important; }
+}
+</style>
 {% endblock %}
