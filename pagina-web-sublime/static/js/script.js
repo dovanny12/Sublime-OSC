@@ -257,6 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateCartCount(data.cart_count);
                     document.dispatchEvent(new CustomEvent('cartUpdated'));
                     return { success: true, data };
+                } else if (response.status === 401 && data.redirect) {
+                    window.location.href = data.redirect;
+                    return { success: false };
                 } else {
                     return { success: false, error: data.mensaje || 'Error al añadir al carrito' };
                 }

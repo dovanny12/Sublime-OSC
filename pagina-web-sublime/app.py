@@ -930,6 +930,8 @@ def api_post_cart():
 
 @app.route('/api/cart/add', methods=['POST'])
 def api_add_to_cart():
+    if 'user_id' not in session:
+        return jsonify({'mensaje': 'Debes iniciar sesión para añadir productos al carrito.', 'redirect': url_for('login')}), 401
     data = request.get_json(silent=True) or {}
     product_id = data.get('product_id')
     size = data.get('size', 'M')
@@ -2015,6 +2017,8 @@ def agregar_carrito(id):
 
 @app.route('/carrito')
 def carrito():
+    if 'user_id' not in session:
+        return redirect(url_for('login', next='/carrito'))
     if 'user_id' in session:
         cart = load_cart_from_db()
     else:
