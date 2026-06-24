@@ -2138,6 +2138,31 @@ def registro():
     return render_template('registro.html')
 
 
+@app.route('/olvide', methods=['GET', 'POST'])
+def olvide():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        conn = get_shared_db()
+        user = conn.execute('SELECT id_usuario, correo FROM usuarios WHERE correo = ? LIMIT 1', (email,)).fetchone()
+        conn.close()
+        if user:
+            token = secrets.token_urlsafe(48)
+            expires_at = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            conn = get_shared_db()
+            conn.execute('INSERT INTO password_resets (id_usuario, token, expires_at) VALUES (?, ?, ?)',
+                         (user['id_usuario'], token, expires_at))
+            conn.commit()
+            conn.close()
+            sent = send_reset_email(user['correo'], token)
+            if not sent:
+                reset_url = url_for('reset_password', token=token, _external=True)
+                app.logger.warning(f'SMTP not configured. Reset link: {reset_url}')
+                flash(f'Modo desarrollo — enlace de recuperación: {reset_url}', 'info')
+                return render_template('olvide.html', debug_url=reset_url)
+        flash('Si el correo está registrado, recibirás un enlace de recuperación.', 'success')
+        return redirect(url_for('login'))
+    return render_template('olvide.html')
+
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)

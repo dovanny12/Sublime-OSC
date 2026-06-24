@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 450px; margin: 4rem auto; padding: 2rem; background: var(--card-bg); border-radius: 15px; border: 1px solid var(--border-color);">
+    <h1 style="text-align: center; margin-bottom: 0.5rem;">¿Olvidaste tu contraseña?</h1>
+    <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Ingresa tu correo y te enviaremos un enlace para restablecerla.</p>
+    <form method="POST">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 700;">Correo electrónico</label>
+            <input type="email" name="email" required placeholder="tu@correo.com" style="width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px;">
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">Enviar enlace</button>
+    </form>
+    {% if debug_url %}
+    <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(0,179,80,0.1); border-radius: 8px; word-break: break-all;">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">SMTP no configurado. Usa este enlace:</p>
+        <a href="{{ debug_url }}" style="color: #00b350;">{{ debug_url }}</a>
+    </div>
+    {% endif %}
+    <p style="text-align: center; margin-top: 1.5rem;">
+        <a href="{{ url_for('login') }}" style="color: var(--text-muted); font-size: 0.9rem;">Volver a iniciar sesión</a>
+    </p>
+</div>
+{% endblock %}

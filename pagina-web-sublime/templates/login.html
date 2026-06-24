@@ -41,7 +41,7 @@
                     <span class="checkmark"></span>
                     <span class="cb-text">Recordarme</span>
                 </label>
-                <a href="#" onclick="forgotPassword(); return false;" class="forgot-password" style="color: var(--accent-color); text-decoration: none; font-weight: 600; transition: all 0.3s;">¿Olvidaste tu contraseña?</a>
+                <a href="{{ url_for('olvide') }}" class="forgot-password" style="color: var(--accent-color); text-decoration: none; font-weight: 600; transition: all 0.3s;">¿Olvidaste tu contraseña?</a>
             </div>
             
             <div id="mensajeError" style="display:none; background-color: #ffdddd; color: #d8000c; padding: 12px; border-radius: 8px; font-weight: 700; margin-bottom: 16px; text-align: center; font-size: 0.95rem;"></div>
@@ -107,24 +107,5 @@
             }
         });
     }
-
-    window.forgotPassword = function() {
-        const email = prompt('Ingresa tu correo electrónico para recuperar tu contraseña:');
-        if (!email || !email.includes('@')) return;
-        fetch('/api/forgot', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email: email})
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.debug_url) {
-                alert('Modo desarrollo — enlace de recuperación:\n' + data.debug_url);
-            } else {
-                alert(data.mensaje || 'Revisa tu correo para continuar.');
-            }
-        })
-        .catch(() => alert('Error al enviar la solicitud. Intenta de nuevo.'));
-    };
 </script>
 {% endblock %}
