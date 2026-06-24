@@ -41,16 +41,13 @@
                     <span class="checkmark"></span>
                     <span class="cb-text">Recordarme</span>
                 </label>
-                <a href="#" class="forgot-password" style="color: var(--accent-color); text-decoration: none; font-weight: 600; transition: all 0.3s;">¿Olvidaste tu contraseña?</a>
+                <a href="#" onclick="forgotPassword(); return false;" class="forgot-password" style="color: var(--accent-color); text-decoration: none; font-weight: 600; transition: all 0.3s;">¿Olvidaste tu contraseña?</a>
             </div>
             
             <div id="mensajeError" style="display:none; background-color: #ffdddd; color: #d8000c; padding: 12px; border-radius: 8px; font-weight: 700; margin-bottom: 16px; text-align: center; font-size: 0.95rem;"></div>
             <button type="submit" class="btn-primary glow-btn" style="width: 100%; padding: 16px; border-radius: 15px; font-size: 1.1rem; letter-spacing: 2px; border: none; cursor: pointer; text-transform: uppercase; font-weight: 900; background: var(--primary-grad); color: #000; position: relative; overflow: hidden;">
                 <span style="position: relative; z-index: 1;">ENTRAR</span>
             </button>
-            <p style="text-align: center; margin-top: 12px;">
-                <a href="#" onclick="forgotPassword()" style="color: #00b350; font-size: 0.85rem; text-decoration: none;">¿Olvidaste tu contraseña?</a>
-            </p>
         </form>
         
         <script src="{{ url_for('static', filename='login.js') }}"></script>
