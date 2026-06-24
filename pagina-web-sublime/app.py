@@ -1628,7 +1628,7 @@ try:
     rows = conn.execute('SELECT id_usuario, contraseña FROM usuarios').fetchall()
     for row in rows:
         pw = row['contraseña']
-        if not pw.startswith('pbkdf2:sha256:'):
+        if not (pw.startswith('pbkdf2:sha256:') or pw.startswith('scrypt:')):
             conn.execute('UPDATE usuarios SET contraseña = ? WHERE id_usuario = ?',
                          (generate_password_hash(pw), row['id_usuario']))
     conn.commit()
