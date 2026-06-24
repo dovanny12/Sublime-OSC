@@ -423,6 +423,13 @@ def ensure_order_statuses(conn):
             if nombre not in existing:
                 conn.execute('INSERT INTO estados_pedido (nombre) VALUES (?)', (nombre,))
         conn.commit()
+    # Migrar pedidos viejos que aun apuntan al estado "Pendiente" (anterior al renombre)
+    old_status = conn.execute('SELECT id_estado FROM estados_pedido WHERE nombre = ? LIMIT 1', ('Pendiente',)).fetchone()
+    new_status = conn.execute('SELECT id_estado FROM estados_pedido WHERE nombre = ? LIMIT 1', ('Pendiente de Verificaci\u00f3n',)).fetchone()
+    if old_status and new_status:
+        conn.execute('UPDATE pedidos SET id_estado = ? WHERE id_estado = ?', (new_status['id_estado'], old_status['id_estado']))
+        conn.execute("DELETE FROM estados_pedido WHERE id_estado = ? AND nombre = 'Pendiente'", (old_status['id_estado'],))
+        conn.commit()
 
 
 def get_or_create_cart(conn, cliente_id):
