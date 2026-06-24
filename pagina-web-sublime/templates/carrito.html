@@ -67,6 +67,10 @@
             </div>
             
             <div class="cart-summary-row">
+                <span>IVA ({{ iva_rate }}%)</span>
+                <span id="selectedIVA">{{ format_price(total * iva_rate / 100) }}</span>
+            </div>
+            <div class="cart-summary-row">
                 <span>Envío</span>
                 <span id="shippingCost">Por calcular</span>
             </div>
@@ -75,7 +79,7 @@
             
             <div class="cart-summary-row cart-summary-total">
                 <span>Total</span>
-                <span id="selectedTotal">{{ format_price(total) }}</span>
+                <span id="selectedTotal">{{ format_price(total * (1 + iva_rate/100)) }}</span>
             </div>
 
             <button type="button" class="btn-primary cart-checkout-btn" id="checkoutBtn">
@@ -95,7 +99,7 @@
                     <span><i class="fa-solid fa-truck-fast"></i> ZOOM</span>
                 </div>
                 <p class="cart-payment-note">
-                    Los precios incluyen IVA. <a href="{{ url_for('terminos') }}">Términos y condiciones</a> aplican.
+                    <a href="{{ url_for('terminos') }}">Términos y condiciones</a> aplican.
                 </p>
             </div>
         </div>
@@ -120,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectAll = document.getElementById('selectAll');
     const selectedCount = document.getElementById('selectedCount');
     const selectedSubtotal = document.getElementById('selectedSubtotal');
+    const selectedIVA = document.getElementById('selectedIVA');
     const selectedTotal = document.getElementById('selectedTotal');
     const checkoutBtn = document.getElementById('checkoutBtn');
     const checkoutForm = document.getElementById('checkoutForm');
@@ -150,9 +155,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Format like the server does
-        const formatted = '$' + subtotal.toFixed(2);
-        selectedSubtotal.textContent = formatted;
-        selectedTotal.textContent = formatted;
+        const iva = subtotal * {{ iva_rate }} / 100;
+        const totalConIva = subtotal + iva;
+        selectedSubtotal.textContent = '$' + subtotal.toFixed(2);
+        selectedIVA.textContent = '$' + iva.toFixed(2);
+        selectedTotal.textContent = '$' + totalConIva.toFixed(2);
 
         checkoutBtn.disabled = count === 0;
         checkoutBtn.style.opacity = count === 0 ? '0.5' : '1';

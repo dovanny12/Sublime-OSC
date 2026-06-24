@@ -1684,13 +1684,23 @@ if (saveBtn) {
     });
 }
 
-const ivaRateInput = 
-    document.getElementById('ivaRate');
+// ── IVA desde el backend ──
+let currentIVARate = 16;
 
-    if(ivaRateInput){
-        ivaRateInput.value =
-            localStorage.getItem('ivaRate') || '16';
-    }
+function loadIVARate() {
+    fetch('/api/config/iva')
+        .then(r => r.json())
+        .then(data => {
+            currentIVARate = data.iva;
+            const inp = document.getElementById('ivaRate');
+            if (inp) inp.value = currentIVARate;
+        })
+        .catch(() => {});
+}
+
+function getCurrentIVA() {
+    return currentIVARate;
+}
 
 const saveIvaRateBtn =
     document.getElementById('saveIvaRate');
@@ -1711,24 +1721,24 @@ if(saveIvaRateBtn){
 
         }
 
-        localStorage.setItem(
-            'ivaRate',
-            iva
-        );
-
-        showToast(
-            `IVA actualizado a ${iva}%`, 'success'
-        );
+        fetch('/api/config/iva', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({iva: iva})
+        })
+        .then(r => r.json())
+        .then(data => {
+            currentIVARate = data.iva;
+            showToast(`IVA actualizado a ${data.iva}%`, 'success');
+        })
+        .catch(() => showToast('Error al guardar IVA', 'error'));
 
     });
 
 }
 
-function getCurrentIVA(){
-    return parseFloat(
-        localStorage.getItem('ivaRate')
-    ) || 16;
-}
+// Load IVA on startup
+loadIVARate();
 
 async function openEditProduct(id) {
 
@@ -1874,6 +1884,14 @@ window.openInvoiceModal = async function(id){
             .textContent =
             new Date(invoice.fecha)
             .toLocaleDateString('es-VE');
+
+        document.getElementById('invoiceSubtotal')
+            .textContent =
+            formatCurrency(invoice.subtotal || invoice.total);
+
+        document.getElementById('invoiceIVA')
+            .textContent =
+            formatCurrency(invoice.iva_amount || 0);
 
         document.getElementById('invoiceTotal')
             .textContent =

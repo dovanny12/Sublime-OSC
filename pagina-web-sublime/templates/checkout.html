@@ -181,13 +181,17 @@
             <span>{{ format_price(total) }}</span>
         </p>
         <p style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+            <span>IVA ({{ iva_rate }}%)</span>
+            <span id="summaryIVA">{{ format_price(total * iva_rate / 100) }}</span>
+        </p>
+        <p style="display: flex; justify-content: space-between; font-size: 0.9rem;">
             <span>Envío</span>
             <span id="summaryShipping">{{ format_price(0) }}</span>
         </p>
         <hr style="border-color: var(--border-color); margin: 15px 0;">
         <h3 style="display: flex; justify-content: space-between; color: #00ff80; margin: 0;">
             <span>TOTAL</span>
-            <span id="summaryTotal">{{ format_price(total) }}</span>
+            <span id="summaryTotal">{{ format_price(total * (1 + iva_rate/100)) }}</span>
         </h3>
 
         <div id="summaryShippingDetail" style="margin-top: 18px; padding: 14px; background: rgba(0,179,80,0.06); border-radius: 10px; font-size: 0.82rem; display: none;">
@@ -223,7 +227,13 @@ function togglePaymentDetails(method) {
     const summaryShipping = document.getElementById('summaryShipping');
     const summaryTotal = document.getElementById('summaryTotal');
     const baseTotal = {{ total }};
+    const ivaRate = {{ iva_rate }};
     const shippingCost = 5.00;
+    const summaryIVA = document.getElementById('summaryIVA');
+
+    function calcIVA(subtotal) {
+        return subtotal * ivaRate / 100;
+    }
 
     function formatPrice(amount) {
         return '$' + Number(amount).toFixed(2);
@@ -242,10 +252,12 @@ function togglePaymentDetails(method) {
 
     function updateSummary() {
         const selected = document.querySelector('input[name="shipping_method"]:checked');
+        const iva = calcIVA(baseTotal);
+        summaryIVA.textContent = formatPrice(iva);
         if (!selected) {
             summaryDetail.style.display = 'none';
             summaryShipping.textContent = formatPrice(0);
-            summaryTotal.textContent = formatPrice(baseTotal);
+            summaryTotal.textContent = formatPrice(baseTotal + iva);
             return;
         }
         const val = selected.value;
@@ -272,7 +284,7 @@ function togglePaymentDetails(method) {
         summaryMethod.textContent = label;
         summaryAddress.textContent = addr;
         summaryShipping.textContent = formatPrice(cost);
-        summaryTotal.textContent = formatPrice(baseTotal + cost);
+        summaryTotal.textContent = formatPrice(baseTotal + iva + cost);
     }
 
     function validateStep1() {

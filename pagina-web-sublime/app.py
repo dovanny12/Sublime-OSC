@@ -145,6 +145,43 @@ def fetch_bcv_rate():
     usd, _, _ = get_active_rate()
     return usd
 
+# =========================================================
+# IVA helpers
+# =========================================================
+IVA_CACHE = {'rate': 16.0, 'updated': 0}
+
+def get_config_iva():
+    try:
+        conn = sqlite3.connect(SHARED_DB_PATH)
+        row = conn.execute('SELECT iva_default FROM configuracion LIMIT 1').fetchone()
+        conn.close()
+        if row and row[0] is not None and float(row[0]) > 0:
+            return float(row[0])
+    except Exception:
+        pass
+    return None
+
+def save_config_iva(rate):
+    try:
+        conn = sqlite3.connect(SHARED_DB_PATH)
+        existing = conn.execute('SELECT id_configuracion FROM configuracion LIMIT 1').fetchone()
+        if existing:
+            conn.execute('UPDATE configuracion SET iva_default = ? WHERE id_configuracion = ?', (rate, existing[0]))
+        else:
+            conn.execute('INSERT INTO configuracion (iva_default) VALUES (?)', (rate,))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+def get_iva_rate():
+    iva = get_config_iva()
+    if iva and iva > 0:
+        IVA_CACHE['rate'] = iva
+        IVA_CACHE['updated'] = time.time()
+        return iva
+    return IVA_CACHE['rate']
+
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{SHARED_DB_PATH}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 os.makedirs(os.path.dirname(SHARED_DB_PATH), exist_ok=True)
@@ -503,7 +540,8 @@ def inject_exchange_rate():
         tasa_cambio=tasa_usd,
         format_price=format_price,
         cart_count=get_cart_count(),
-        current_username=session.get('username')
+        current_username=session.get('username'),
+        iva_rate=get_iva_rate()
     )
 
 
@@ -525,6 +563,17 @@ def api_tasa_cambio():
 def api_tasa_cambio_bcv():
     usd, eur = fetch_bcv_rates(force=True)
     return jsonify({'usd': usd, 'eur': eur, 'fuente': 'bcv', 'fecha': time.strftime('%Y-%m-%d %H:%M:%S')})
+
+@app.route('/api/config/iva', methods=['GET', 'POST'])
+def api_config_iva():
+    if request.method == 'POST':
+        data = request.get_json()
+        rate = data.get('iva', 16.0)
+        save_config_iva(float(rate))
+        IVA_CACHE['rate'] = float(rate)
+        IVA_CACHE['updated'] = time.time()
+        return jsonify({'success': True, 'iva': float(rate)})
+    return jsonify({'iva': get_iva_rate()})
 
 
 @app.route('/api/login', methods=['POST'])
@@ -885,9 +934,12 @@ def api_checkout():
     status_id = status['id_estado'] if status else 1
 
     total = calculate_cart_total(cart_items)
+    iva_rate = get_iva_rate()
+    impuesto = round(total * iva_rate / 100, 2)
+    total_con_iva = round(total + impuesto, 2)
     pedido_cursor = conn.execute(
         'INSERT INTO pedidos (id_cliente, id_estado, total) VALUES (?, ?, ?)',
-        (cliente_id, status_id, total)
+        (cliente_id, status_id, total_con_iva)
     )
     pedido_id = pedido_cursor.lastrowid
 
@@ -910,7 +962,7 @@ def api_checkout():
     # También crear registro en ventas / detalle_ventas para que aparezca en Facturas del admin
     venta_cursor = conn.execute(
         'INSERT INTO ventas (id_cliente, total) VALUES (?, ?)',
-        (cliente_id, total)
+        (cliente_id, total_con_iva)
     )
     venta_id = venta_cursor.lastrowid
     for item in cart_items:
@@ -924,6 +976,12 @@ def api_checkout():
             (venta_id, product_id, cantidad, precio_unitario)
         )
 
+    # Insertar en facturas con desglose de IVA
+    conn.execute(
+        'INSERT INTO facturas (id_venta, subtotal, porcentaje_iva, impuesto, total_usd) VALUES (?, ?, ?, ?, ?)',
+        (venta_id, total, iva_rate, impuesto, total_con_iva)
+    )
+
     conn.commit()
     conn.close()
 
@@ -933,7 +991,7 @@ def api_checkout():
         session.pop('cart', None)
         session.modified = True
 
-    return jsonify({'mensaje': 'Checkout completado correctamente.', 'order_id': pedido_id, 'total': total}), 201
+    return jsonify({'mensaje': 'Checkout completado correctamente.', 'order_id': pedido_id, 'total': total_con_iva}), 201
 
 
 # ADMIN PANEL - CARRITO POR CLIENTE
@@ -996,9 +1054,12 @@ def admin_create_invoice():
                 return jsonify({'message': msg}), 400
 
     total = sum(float(item.get('price', 0)) * int(item.get('quantity', 1)) for item in items)
+    iva_rate = get_iva_rate()
+    impuesto = round(total * iva_rate / 100, 2)
+    total_con_iva = round(total + impuesto, 2)
     cursor = conn.execute(
         'INSERT INTO ventas (id_cliente, total) VALUES (?, ?)',
-        (cliente_id, total)
+        (cliente_id, total_con_iva)
     )
     venta_id = cursor.lastrowid
     for item in items:
@@ -1006,6 +1067,11 @@ def admin_create_invoice():
             'INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
             (venta_id, item.get('id'), item.get('quantity', 1), item.get('price', 0))
         )
+    # Insertar en facturas con desglose de IVA
+    conn.execute(
+        'INSERT INTO facturas (id_venta, subtotal, porcentaje_iva, impuesto, total_usd) VALUES (?, ?, ?, ?, ?)',
+        (venta_id, total, iva_rate, impuesto, total_con_iva)
+    )
     conn.commit()
     conn.close()
     return jsonify({'message': 'Factura creada correctamente.', 'invoice_id': venta_id}), 201
@@ -1124,9 +1190,23 @@ def api_invoice_detail(invoice_id):
         'WHERE d.id_venta = ?',
         (invoice_id,)
     ).fetchall()
+
+    factura_row = conn.execute(
+        'SELECT subtotal, porcentaje_iva, impuesto FROM facturas WHERE id_venta = ? LIMIT 1',
+        (invoice_id,)
+    ).fetchone()
+
     conn.close()
 
     invoice = dict(venta)
+    if factura_row:
+        invoice['subtotal'] = float(factura_row['subtotal'])
+        invoice['iva_pct'] = float(factura_row['porcentaje_iva'])
+        invoice['iva_amount'] = float(factura_row['impuesto'])
+    else:
+        invoice['subtotal'] = float(venta['total'])
+        invoice['iva_pct'] = 0
+        invoice['iva_amount'] = 0
     invoice['detalles'] = [dict(row) for row in detalles]
     return jsonify(invoice)
 
@@ -1666,9 +1746,12 @@ def checkout():
         status = conn.execute('SELECT id_estado FROM estados_pedido WHERE nombre = ? LIMIT 1', ('Pendiente',)).fetchone()
         status_id = status['id_estado'] if status else 1
 
+        iva_rate = get_iva_rate()
+        impuesto = round(total * iva_rate / 100, 2)
+        total_con_iva = round(total + impuesto, 2)
         pedido_cursor = conn.execute(
             'INSERT INTO pedidos (id_cliente, id_estado, total) VALUES (?, ?, ?)',
-            (cliente_id, status_id, total)
+            (cliente_id, status_id, total_con_iva)
         )
         pedido_id = pedido_cursor.lastrowid
 
@@ -1690,7 +1773,7 @@ def checkout():
         # También crear registro en ventas / detalle_ventas para que aparezca en Facturas del admin
         venta_cursor = conn.execute(
             'INSERT INTO ventas (id_cliente, total) VALUES (?, ?)',
-            (cliente_id, total)
+            (cliente_id, total_con_iva)
         )
         venta_id = venta_cursor.lastrowid
         for item in cart:
@@ -1701,6 +1784,12 @@ def checkout():
                 'INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
                 (venta_id, product_id, item.get('quantity', 1), item['price'])
             )
+
+        # Insertar en facturas con desglose de IVA
+        conn.execute(
+            'INSERT INTO facturas (id_venta, subtotal, porcentaje_iva, impuesto, total_usd) VALUES (?, ?, ?, ?, ?)',
+            (venta_id, total, iva_rate, impuesto, total_con_iva)
+        )
 
         conn.commit()
         conn.close()
@@ -1748,6 +1837,11 @@ def factura(order_id):
     ).fetchall()
     conn.close()
 
+    items_subtotal = sum(float(item['precio_unitario']) * int(item['cantidad']) for item in items)
+    iva_rate = get_iva_rate()
+    iva_amount = round(items_subtotal * iva_rate / 100, 2)
+    total_final = round(items_subtotal + iva_amount, 2)
+
     items_list = [
         {
             'name': item['name'] or 'Producto personalizado',
@@ -1759,7 +1853,10 @@ def factura(order_id):
 
     order = {
         'id': order_row['id'],
-        'total': float(order_row['total']),
+        'subtotal': items_subtotal,
+        'iva_pct': iva_rate,
+        'iva_amount': iva_amount,
+        'total': total_final,
         'address': order_row['address'] or '',
         'payment_method': order_row['payment_method'] or '',
         'reference': order_row['reference'] or '',

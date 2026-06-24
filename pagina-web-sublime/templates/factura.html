@@ -52,7 +52,11 @@
     <div style="margin-left: auto; width: 300px;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <span>Subtotal:</span>
-            <span>{{ format_price(order.total) }}</span>
+            <span>{{ format_price(order.subtotal) }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span>IVA ({{ order.iva_pct }}%):</span>
+            <span>{{ format_price(order.iva_amount) }}</span>
         </div>
         {% set shipping_cost = 5.00 if order.tipo_envio == 'destino' else 0 %}
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
