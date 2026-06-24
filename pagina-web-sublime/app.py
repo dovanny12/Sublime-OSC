@@ -575,7 +575,7 @@ db.init_app(app)
 ensure_shared_db()
 
 # Migrar estados de pedido al iniciar
-conn = sqlite3.connect(SHARED_DB_PATH)
+conn = get_shared_db()
 ensure_order_statuses(conn)
 conn.close()
 
