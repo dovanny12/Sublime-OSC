@@ -1528,6 +1528,17 @@ try:
     conn.commit()
 except Exception:
     pass
+try:
+    conn = get_shared_db()
+    rows = conn.execute('SELECT id_usuario, contraseña FROM usuarios').fetchall()
+    for row in rows:
+        pw = row['contraseña']
+        if not pw.startswith('pbkdf2:sha256:'):
+            conn.execute('UPDATE usuarios SET contraseña = ? WHERE id_usuario = ?',
+                         (generate_password_hash(pw), row['id_usuario']))
+    conn.commit()
+except Exception:
+    pass
 conn.close()
 
 # Semillas en la base de datos compartida (esquema SQL en español)
