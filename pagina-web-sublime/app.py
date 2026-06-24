@@ -574,6 +574,11 @@ def merge_guest_cart_into_db(guest_cart):
 db.init_app(app)
 ensure_shared_db()
 
+# Migrar estados de pedido al iniciar
+conn = sqlite3.connect(SHARED_DB_PATH)
+ensure_order_statuses(conn)
+conn.close()
+
 # Si creamos una DB vacía, permitir que SQLAlchemy cree las tablas definidas en models.py
 with app.app_context():
     try:
@@ -1537,6 +1542,7 @@ def api_update_order_status(order_id):
 @admin_required
 def api_verify_order_payment(order_id):
     conn = get_shared_db()
+    ensure_order_statuses(conn)
 
     pedido = conn.execute('SELECT id_estado, total FROM pedidos WHERE id_pedido = ? LIMIT 1', (order_id,)).fetchone()
     if not pedido:
@@ -1544,7 +1550,7 @@ def api_verify_order_payment(order_id):
         return jsonify({'message': 'Pedido no encontrado.'}), 404
 
     estado = conn.execute('SELECT nombre FROM estados_pedido WHERE id_estado = ? LIMIT 1', (pedido['id_estado'],)).fetchone()
-    if estado and estado['nombre'] != 'Pendiente de Verificacion':
+    if estado and estado['nombre'] != 'Pendiente de Verificaci\u00f3n':
         conn.close()
         return jsonify({'message': 'El pedido ya fue procesado.'}), 400
 
