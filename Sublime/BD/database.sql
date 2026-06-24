@@ -765,7 +765,7 @@ BEGIN
         id_producto,
         mensaje
     )
-    VALUES (
+    VALUES     (
         NEW.id_producto,
         'Stock bajo del mínimo permitido'
     );

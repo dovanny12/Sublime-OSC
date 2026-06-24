@@ -221,12 +221,19 @@ os.makedirs(os.path.dirname(SHARED_DB_PATH), exist_ok=True)
 
 
 def ensure_shared_db():
-    # Crear la DB si no existe y siempre aplicar el schema SQL
     conn = sqlite3.connect(SHARED_DB_PATH)
     conn.execute('PRAGMA foreign_keys = ON')
     if os.path.exists(SHARED_SQL_PATH):
         with open(SHARED_SQL_PATH, 'r', encoding='utf-8') as f:
-            conn.executescript(f.read())
+            sql = f.read()
+        # Split into individual statements and execute each one
+        for statement in sql.split(';'):
+            stmt = statement.strip()
+            if stmt:
+                try:
+                    conn.execute(stmt)
+                except Exception:
+                    pass
     conn.commit()
     conn.close()
 
